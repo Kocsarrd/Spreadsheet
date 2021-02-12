@@ -6,8 +6,8 @@ import Control.Monad
 import Data.IORef
 import Prelude hiding (lookup)
 
-import Spreadsheet
-
+import Spreadsheet.Spreadsheet
+import Spreadsheet.Interface
 
 main :: IO ()
 main = do
@@ -17,7 +17,7 @@ main = do
   set mainWindow [windowTitle := "GUI demo",
                   containerChild := vbox]
 
-  spreadsheet <- newIORef $ emptySpreadSheet
+  spreadsheet <- newIORef $ emptySpreadsheet
   (table, entryKeys) <- getTable spreadsheet
   boxPackStart vbox table PackGrow 0
     
