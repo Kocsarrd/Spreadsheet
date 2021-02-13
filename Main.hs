@@ -36,10 +36,14 @@ getEditor ssR entryKeys = do
   onFocusOut editor $ editorLosesFocus editor ssR entryKeys
   return editor
 
--- this should show the previous input of cell
 editorGetsFocus :: Entry -> IORef Spreadsheet -> Event -> IO Bool
-editorGetsFocus editor ssR e = entrySetText editor "" *> pure False
-
+editorGetsFocus editor ssR e = do
+  ss <- readIORef ssR
+  case getSelected ss of
+    Nothing -> entrySetText editor ""
+    Just key -> entrySetText editor (getCellCode key ss)
+  return False
+  
 editorLosesFocus :: Entry -> IORef Spreadsheet -> [(Entry, (Int, Int))] -> Event -> IO Bool
 editorLosesFocus editor ssR entryKeys e = do
   ss <- readIORef ssR

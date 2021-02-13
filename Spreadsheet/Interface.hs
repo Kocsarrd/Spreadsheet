@@ -1,7 +1,7 @@
 module Spreadsheet.Interface
   (
   emptySpreadsheet,
-  getCellText, setCellState,
+  getCellText, getCellCode, setCellState,
   getSelected, setSelected
   ) where
 
@@ -16,11 +16,19 @@ import Spreadsheet.Parser
 emptySpreadsheet :: Spreadsheet
 emptySpreadsheet = SS empty Nothing
 
+-- text representation for showing
 getCellText :: CellID -> Spreadsheet -> String
 getCellText id ss = case lab (ss^.sheet) id of
                        Nothing        -> ""
                        Just (Str str) -> str
                        Just (Ref id' _) -> getCellText id' ss
+
+-- user given code for cell
+getCellCode :: CellID -> Spreadsheet -> String
+getCellCode id ss = case lab (ss^.sheet) id of
+                      Nothing -> ""
+                      Just (Str str) -> str
+                      Just (Ref _ str) -> str
 
 setCellState :: CellID -> String -> Spreadsheet -> Spreadsheet
 setCellState id' str' ss'
