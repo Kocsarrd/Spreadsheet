@@ -14,17 +14,45 @@ main = do
   initGUI
   mainWindow <- windowNew
   vbox <- vBoxNew False 10
-  set mainWindow [windowTitle := "GUI demo",
+  set mainWindow [windowTitle := "Fazekas Sándor",
                   containerChild := vbox]
 
   spreadsheet <- newIORef $ emptySpreadsheet
+
   (table, entryKeys) <- getTable spreadsheet
+  editor <- getEditor spreadsheet entryKeys
+  boxPackStart vbox editor PackNatural 0
   boxPackStart vbox table PackGrow 0
     
   windowMaximize mainWindow
   widgetShowAll mainWindow
   onDestroy mainWindow mainQuit
   mainGUI
+
+getEditor :: IORef Spreadsheet -> [(Entry, (Int, Int))] -> IO Entry
+getEditor ssR entryKeys = do
+  editor <- entryNew
+  onFocusIn editor $ editorGetsFocus editor ssR
+  onFocusOut editor $ editorLosesFocus editor ssR entryKeys
+  return editor
+
+-- currently not doing anything
+editorGetsFocus :: Entry -> IORef Spreadsheet -> Event -> IO Bool
+editorGetsFocus editor ssR e = pure False
+
+editorLosesFocus :: Entry -> IORef Spreadsheet -> [(Entry, (Int, Int))] -> Event -> IO Bool
+editorLosesFocus editor ssR entryKeys e = do
+  ss <- readIORef ssR
+  newText <- entryGetText editor
+  case getSelected ss of
+    Nothing -> pure ()
+    Just key -> unless (newText == getCellText key ss) $
+                  modifyIORef' ssR $ setCellState key newText
+  forM_ entryKeys $ \(e,k) -> do
+    newText <- getCellText (fromEnum k) <$> readIORef ssR
+    entrySetText e newText
+  return False
+  
 
 getTable :: IORef Spreadsheet -> IO (Table, [(Entry, (Int, Int))])
 getTable spreadsheet = do
@@ -37,7 +65,7 @@ getTable spreadsheet = do
     label <- labelNew $ Just ""
     labelSetMarkup label $ "<span foreground=\"white\" weight=\"bold\" >" ++ pure c ++ "</span>"
     tableAttach table label 0 1 (n+1) (n+2) [Fill] [] 0 0
-  
+
   entryKeys <- fmap concat $ forM [0..sizeX] $
     \n -> forM [0..sizeY] $ \m -> do
       entry <- entryNew
@@ -45,22 +73,34 @@ getTable spreadsheet = do
       tableAttach table entry (n+1) (n+2) (m+1) (m+2) [Fill] [] 0 0
       return (entry, (m,n))
   forM_ entryKeys $ \(entry, mn) -> do
-    afterFocusOut entry $ entryLosesFocus entry mn spreadsheet entryKeys   
+    onFocusIn entry $ cellGetsFocus entry mn spreadsheet 
+    onFocusOut entry $ cellLosesFocus entry mn spreadsheet entryKeys
   return (table, entryKeys)
 
-entryLosesFocus :: Entry -> (Int, Int) -> IORef Spreadsheet -> [(Entry, (Int, Int))] -> Event -> IO Bool
-entryLosesFocus entry key spreadsheetR entryKeys e = do
-  spreadsheet <- readIORef spreadsheetR
+
+cellGetsFocus :: Entry -> (Int, Int) -> IORef Spreadsheet -> Event -> IO Bool
+cellGetsFocus entry key ssR _ = do
+  modifyIORef' ssR $ setSelected (fromEnum key)
+  --debug
+  ss <- readIORef ssR
+  putStrLn $ "on get: " ++ show ss
+  return False
+
+cellLosesFocus :: Entry -> (Int, Int) -> IORef Spreadsheet -> [(Entry, (Int, Int))] -> Event -> IO Bool
+cellLosesFocus entry key ssR entryKeys _ = do
+  spreadsheet <- readIORef ssR
   entryText <- entryGetText entry
   unless (entryText == getCellText (fromEnum key) spreadsheet) $
-    modifyIORef' spreadsheetR $ setCellState (fromEnum key) entryText
+    modifyIORef' ssR $ setCellState (fromEnum key) entryText
   
   forM_ entryKeys $ \(e,k) -> do
-    newText <- getCellText (fromEnum k) <$> readIORef spreadsheetR
+    newText <- getCellText (fromEnum k) <$> readIORef ssR
     entrySetText e newText
   --debug
-  putStrLn $ show spreadsheet
+  --putStrLn $ "on lose: " ++ show spreadsheet
+
   return False
+
 
 -- hardcode alert
 sizeX, sizeY :: Int

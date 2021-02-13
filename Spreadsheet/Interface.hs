@@ -1,7 +1,8 @@
 module Spreadsheet.Interface
   (
   emptySpreadsheet,
-  getCellText, setCellState
+  getCellText, setCellState,
+  getSelected, setSelected
   ) where
 
 import Data.Graph.Inductive.Graph
@@ -40,6 +41,12 @@ setCellState id' str' ss'
     ssN = overSH ssB' $ insEdges (zip3 (repeat id') newRefs $ repeat 1)
     newRefs = references cell'
     cell' = rep str'
+
+getSelected :: Spreadsheet -> Maybe CellID
+getSelected ss = ss^.selected
+
+setSelected :: CellID -> Spreadsheet -> Spreadsheet
+setSelected = set selected . Just
 
 isLegal :: CellID -> [CellID] -> Spreadsheet -> Bool
 isLegal id []  _  = True
