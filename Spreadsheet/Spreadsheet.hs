@@ -5,7 +5,7 @@ module Spreadsheet.Spreadsheet (
   Cell(..), CellID,
   Spreadsheet(..),
   sheet, selected,
-  
+  overSH
   ) where
 
 import Data.Graph.Inductive.PatriciaTree
@@ -21,7 +21,9 @@ data Spreadsheet = SS { _sheet :: Gr Cell Int
   deriving(Show)
                    
 makeLenses ''Spreadsheet
-      
+
+overSH ss f = over sheet f ss
+  
 -- stackoverflow <3
 instance Integral a => Enum (a,a) where
   fromEnum (x,y) = fromEnum $ k^2  +  2*j  +  if permuted then 1 else 0

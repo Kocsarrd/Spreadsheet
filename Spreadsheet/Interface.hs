@@ -23,7 +23,7 @@ getCellText id ss = case lab (ss^.sheet) id of
 
 setCellState :: CellID -> String -> Spreadsheet -> Spreadsheet
 setCellState id' str' ss'
-  | isLegal id' newRefs ssB' = over sheet (legalSet id' cell') ssN
+  | isLegal id' newRefs ssB' = overSH ssN $ legalSet id' cell' 
   | otherwise = ss'
   where
     legalSet id (Str "") sh
@@ -33,11 +33,11 @@ setCellState id' str' ss'
                       (Nothing,            _) -> error "node does not exist!"
     legalSet _ _ _ = ssN^.sheet
     oldRefs = suc (ss'^.sheet) id'
-    ssB = over sheet (delEdges (zip oldRefs $ repeat id')) ss'
+    ssB = overSH ss' $ delEdges (zip oldRefs $ repeat id')
     ssB' = case match id' $ ssB^.sheet of
              (Just (p, _, l, s), cg) -> set sheet ((p, id', cell', s) & cg) ssB
-             (Nothing,            _) -> over sheet (insNode (id', cell')) ssB
-    ssN = over sheet (insEdges (zip3 (repeat id') newRefs $ repeat 1)) ssB'
+             (Nothing,            _) -> overSH ssB $ insNode (id', cell')
+    ssN = overSH ssB' $ insEdges (zip3 (repeat id') newRefs $ repeat 1)
     newRefs = references cell'
     cell' = rep str'
 
