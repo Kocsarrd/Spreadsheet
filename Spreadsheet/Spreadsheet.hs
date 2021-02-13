@@ -1,18 +1,26 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Spreadsheet.Spreadsheet (
   Cell(..), CellID,
-  Spreadsheet(..)
+  Spreadsheet(..),
+  sheet, selected,
+  
   ) where
 
 import Data.Graph.Inductive.PatriciaTree
+import Lens.Micro.Platform
 
 type CellID = Int
 
 data Cell = Str String | Ref CellID
   deriving (Eq, Show)
 
-type Spreadsheet = Gr Cell Int
+data Spreadsheet = SS { _sheet :: Gr Cell Int
+                      , _selected :: Maybe CellID}
+  deriving(Show)
+                   
+makeLenses ''Spreadsheet
       
 -- stackoverflow <3
 instance Integral a => Enum (a,a) where
