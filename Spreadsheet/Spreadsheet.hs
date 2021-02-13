@@ -21,7 +21,6 @@ data Spreadsheet = SS { _sheet :: Gr Cell Int
   deriving(Show)
                    
 makeLenses ''Spreadsheet
-
 overSH ss f = over sheet f ss
   
 -- stackoverflow <3
