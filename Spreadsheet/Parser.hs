@@ -8,12 +8,12 @@ import Text.Parsec.String
 import Spreadsheet.Spreadsheet
 
 rep :: String -> Cell
-rep str = case parse cellParser "" str of
+rep str = case parse (cellParser str) "" str of
   Right cell -> cell
   _          -> error "parse error"
 
-cellParser :: Parser Cell
-cellParser = try refParser <|> (Str <$> many anyChar)
+cellParser :: String -> Parser Cell
+cellParser str = try refParser <|> (Str <$> many anyChar)
   where
     refParser :: Parser Cell
     refParser = do
@@ -22,7 +22,7 @@ cellParser = try refParser <|> (Str <$> many anyChar)
       n <- letterToNum <$> (toUpper <$> letter)
       m <- number
       char '§'
-      return $ Ref $ fromEnum (n,m)
+      return $ Ref (fromEnum (n,m)) str
 
     letterToNum :: Char -> Int
     letterToNum c = fromEnum c - 65

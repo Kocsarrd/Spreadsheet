@@ -13,7 +13,7 @@ import Lens.Micro.Platform
 
 type CellID = Int
 
-data Cell = Str String | Ref CellID
+data Cell = Str String | Ref CellID String
   deriving (Eq, Show)
 
 data Spreadsheet = SS { _sheet :: Gr Cell Int

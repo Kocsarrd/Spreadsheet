@@ -20,7 +20,7 @@ getCellText :: CellID -> Spreadsheet -> String
 getCellText id ss = case lab (ss^.sheet) id of
                        Nothing        -> ""
                        Just (Str str) -> str
-                       Just (Ref id') -> getCellText id' ss
+                       Just (Ref id' _) -> getCellText id' ss
 
 setCellState :: CellID -> String -> Spreadsheet -> Spreadsheet
 setCellState id' str' ss'
@@ -48,13 +48,15 @@ getSelected ss = ss^.selected
 setSelected :: CellID -> Spreadsheet -> Spreadsheet
 setSelected = set selected . Just
 
+-- this needs to be generalized
 isLegal :: CellID -> [CellID] -> Spreadsheet -> Bool
 isLegal id []  _  = True
 isLegal id [ref] ss = case sp ref id $ ss^.sheet of
                          Nothing -> True
                          Just _  -> False
 
+-- this needs to be generalized 
 references :: Cell -> [CellID]
 references (Str _)    = []
-references (Ref cell) = [cell]
+references (Ref cell _) = [cell]
 
