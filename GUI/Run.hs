@@ -26,6 +26,10 @@ runGUI spreadsheet = do
   widgetShowAll mainWindow
   onDestroy mainWindow $ quitAndSave spreadsheet
   mainGUI
+  
+---------------------------------------
+-- one line editor on top of the window
+---------------------------------------
 
 getEditor :: IORef Spreadsheet -> [(Entry, (Int, Int))] -> IO Entry
 getEditor ssR entryKeys = do
@@ -54,7 +58,10 @@ editorLosesFocus editor ssR entryKeys e = do
     newText <- getCellText (fromEnum k) <$> readIORef ssR
     entrySetText e newText
   return False
-  
+
+-----------------------------------------
+-- table for representing the spreadsheet
+-----------------------------------------
 
 getTable :: IORef Spreadsheet -> IO (Table, [(Entry, (Int, Int))])
 getTable spreadsheet = do
@@ -78,7 +85,6 @@ getTable spreadsheet = do
     onFocusIn entry $ cellGetsFocus entry mn spreadsheet 
     onFocusOut entry $ cellLosesFocus entry mn spreadsheet entryKeys
   return (table, entryKeys)
-
 
 
 cellGetsFocus :: Entry -> (Int, Int) -> IORef Spreadsheet -> Event -> IO Bool
