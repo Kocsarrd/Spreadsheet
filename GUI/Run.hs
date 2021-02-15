@@ -162,9 +162,7 @@ loadAction ssR = do
                          case fname of
                            Nothing -> pure ()
                            Just file -> do ssE <- loadSheet file
-                                           case ssE of
-                                             Left str -> putStrLn str
-                                             Right ss -> writeIORef ssR ss
+                                           either putStrLn (writeIORef ssR)
     _ -> pure ()
   widgetDestroy dialog
 
