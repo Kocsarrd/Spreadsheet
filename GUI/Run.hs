@@ -10,21 +10,23 @@ import Spreadsheet.Spreadsheet
 import Spreadsheet.Interface
 
 runGUI :: IORef Spreadsheet -> IO ()
-runGUI spreadsheet = do
+runGUI ssR = do
   initGUI
   mainWindow <- windowNew
   vbox <- vBoxNew False 10
   set mainWindow [windowTitle := "Fazekas Sándor",
                   containerChild := vbox]
 
-  (table, entryKeys) <- getTable spreadsheet
-  editor <- getEditor spreadsheet entryKeys
+  menu <- getMenubar ssR
+  (table, entryKeys) <- getTable ssR
+  editor <- getEditor ssR entryKeys
+  boxPackStart vbox menu PackNatural 0
   boxPackStart vbox editor PackNatural 0
   boxPackStart vbox table PackGrow 0
     
   windowMaximize mainWindow
   widgetShowAll mainWindow
-  onDestroy mainWindow $ quitAndSave spreadsheet
+  onDestroy mainWindow mainQuit
   mainGUI
   
 ---------------------------------------
@@ -59,6 +61,33 @@ editorLosesFocus editor ssR entryKeys e = do
     entrySetText e newText
   return False
 
+--------------------------------------
+-- file chooser for loading and saving
+--------------------------------------
+
+getFileChooserDialog :: FileChooserAction -> IO FileChooserDialog
+getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ "sheet") Nothing act
+                                   [("Cancel", ResponseCancel), (title, ResponseAccept)]                                
+  where
+    title = case act of
+              FileChooserActionOpen -> "Load"
+              FileChooserActionSave -> "Save"
+              _                     -> "Fazekas Sándor"
+
+----------------------------
+-- menubar for basic actions
+----------------------------
+
+getMenubar :: IORef Spreadsheet -> IO HButtonBox
+getMenubar ssR = do
+  menu <- hButtonBoxNew
+  saveButton <- buttonNewWithMnemonic "_Save"
+  buttonBoxSetLayout menu ButtonboxStart
+  onClicked saveButton $ saveAction ssR
+  boxPackStart menu saveButton PackNatural 0
+  return menu
+  
+  
 -----------------------------------------
 -- table for representing the spreadsheet
 -----------------------------------------
@@ -116,6 +145,24 @@ sizeX, sizeY :: Int
 sizeX = 15
 sizeY = 19
 
+------------------------------------------
+-- persistence actions, this will be moved
+------------------------------------------
+
+saveAction :: IORef Spreadsheet -> IO ()
+saveAction ssR = do
+  dialog <- getFileChooserDialog FileChooserActionSave
+  fileChooserSetDoOverwriteConfirmation dialog True
+  widgetShow dialog
+  response <- dialogRun dialog
+  case response of
+    ResponseAccept -> do fname <- fileChooserGetFilename dialog
+                         case fname of
+                           Nothing -> pure ()
+                           Just file -> readIORef ssR >>= saveSheet (file ++ ".fsandor")
+    _ -> pure ()
+  widgetDestroy dialog
+  
 
 -- this is for debugging
 quitAndSave :: IORef Spreadsheet -> IO ()
