@@ -161,8 +161,7 @@ loadAction ssR = do
     ResponseAccept -> do fname <- fileChooserGetFilename dialog
                          case fname of
                            Nothing -> pure ()
-                           Just file -> do ssE <- loadSheet file
-                                           either putStrLn (writeIORef ssR)
+                           Just file -> loadSheet file >>= either putStrLn (writeIORef ssR)
     _ -> pure ()
   widgetDestroy dialog
 
