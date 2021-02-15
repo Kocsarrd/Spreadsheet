@@ -81,10 +81,13 @@ getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ "sheet") Nothi
 getMenubar :: IORef Spreadsheet -> IO HButtonBox
 getMenubar ssR = do
   menu <- hButtonBoxNew
-  saveButton <- buttonNewWithMnemonic "_Save"
   buttonBoxSetLayout menu ButtonboxStart
+  saveButton <- buttonNewWithMnemonic "_Save"
   onClicked saveButton $ saveAction ssR
+  loadButton <- buttonNewWithMnemonic "_Load"
+  onClicked loadButton $ loadAction ssR
   boxPackStart menu saveButton PackNatural 0
+  boxPackStart menu loadButton PackNatural 0
   return menu
   
   
@@ -148,6 +151,22 @@ sizeY = 19
 ------------------------------------------
 -- persistence actions, this will be moved
 ------------------------------------------
+
+loadAction :: IORef Spreadsheet -> IO ()
+loadAction ssR = do
+  dialog <- getFileChooserDialog FileChooserActionOpen
+  widgetShow dialog
+  response <- dialogRun dialog
+  case response of
+    ResponseAccept -> do fname <- fileChooserGetFilename dialog
+                         case fname of
+                           Nothing -> pure ()
+                           Just file -> do ssE <- loadSheet file
+                                           case ssE of
+                                             Left str -> putStrLn str
+                                             Right ss -> writeIORef ssR ss
+    _ -> pure ()
+  widgetDestroy dialog
 
 saveAction :: IORef Spreadsheet -> IO ()
 saveAction ssR = do
