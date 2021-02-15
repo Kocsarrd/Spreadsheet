@@ -1,3 +1,5 @@
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TemplateHaskell #-}
 
@@ -8,20 +10,28 @@ module Spreadsheet.Spreadsheet (
   overSH
   ) where
 
+import GHC.Generics
 import Data.Graph.Inductive.PatriciaTree
+import Data.Serialize (Serialize)
 import Lens.Micro.Platform
 
 type CellID = Int
 
 data Cell = Str String | Ref CellID String
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
 
 data Spreadsheet = SS { _sheet :: Gr Cell Int
                       , _selected :: Maybe CellID}
-  deriving(Show)
+  deriving(Eq, Show, Generic)
                    
 makeLenses ''Spreadsheet
 overSH ss f = over sheet f ss
+
+instance Serialize Cell where
+
+instance (Serialize a, Serialize b) => Serialize (Gr a b) where
+
+instance Serialize Spreadsheet where
   
 -- stackoverflow <3
 instance Integral a => Enum (a,a) where

@@ -4,8 +4,9 @@ import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.Events
 import Control.Monad
 import Data.IORef
-import Prelude hiding (lookup)
+import System.Directory
 
+import Persistence
 import Spreadsheet.Spreadsheet
 import Spreadsheet.Interface
 
@@ -17,7 +18,7 @@ main = do
   set mainWindow [windowTitle := "Fazekas Sándor",
                   containerChild := vbox]
 
-  spreadsheet <- newIORef $ emptySpreadsheet
+  spreadsheet <- loadIfExists
 
   (table, entryKeys) <- getTable spreadsheet
   editor <- getEditor spreadsheet entryKeys
@@ -26,8 +27,20 @@ main = do
     
   windowMaximize mainWindow
   widgetShowAll mainWindow
-  onDestroy mainWindow mainQuit
+  onDestroy mainWindow $ quitAndSave spreadsheet
   mainGUI
+
+-- this is for debugging
+quitAndSave :: IORef Spreadsheet -> IO ()
+quitAndSave ssR = readIORef ssR >>= saveSheet "sheet.fsandor" >> mainQuit
+
+-- this is for debugging
+loadIfExists :: IO (IORef Spreadsheet)
+loadIfExists = do
+  ssE <- loadSheet "sheet.fsandor"
+  case ssE of
+    Left _  -> newIORef emptySpreadsheet
+    Right ss -> newIORef ss 
 
 getEditor :: IORef Spreadsheet -> [(Entry, (Int, Int))] -> IO Entry
 getEditor ssR entryKeys = do
