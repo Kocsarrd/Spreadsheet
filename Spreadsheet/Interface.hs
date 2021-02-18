@@ -8,6 +8,7 @@ module Spreadsheet.Interface
 import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.PatriciaTree
 import Data.Graph.Inductive.Query
+import Data.Ratio.Rounding
 import Lens.Micro.Platform hiding ((&))
 
 import Spreadsheet.Spreadsheet
@@ -18,12 +19,12 @@ emptySpreadsheet = SS empty Nothing
 
 -- text representation for showing
 -- pattern matches on Cell
--- number of shown decimals needs to be limited!
+-- number of shown decimals is hardcoded!
 getCellText :: CellID -> Spreadsheet -> String
 getCellText id ss = case lab (ss^.sheet) id of
                        Nothing        -> ""
                        Just (Str str) -> str
-                       Just (Number num) -> show $ fromRational num
+                       Just (Number num) -> show $ fromRational $ dpRound 3 num
                        Just (Ref id' _) -> getCellText id' ss
 
 -- user given code for cell

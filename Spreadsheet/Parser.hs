@@ -16,7 +16,7 @@ rep str = case parse (cellParser str) "" str of
 
 cellParser :: String -> Parser Cell
 cellParser str = try (formula str)
-                  <|> (Number <$> try number )
+                  <|> (Number <$> try number)
                   <|> (Str <$> many anyChar)
 
 
@@ -43,3 +43,14 @@ number = fmap rd $ liftA2 (++) integer decimal <* spaces <* notFollowedBy anyCha
     plus = char '+' *> digits
     minus = liftA2 (:) (char '-') digits
     integer = plus <|> minus <|> digits
+
+
+var :: Parser String
+var = do
+    fc <- firstChar
+    rest <- many nonFirstChar
+    return (fc:rest)
+  where
+    firstChar = satisfy (\a -> isLetter a || a == '_')
+    nonFirstChar = satisfy (\a -> isDigit a || isLetter a || a == '_')
+
