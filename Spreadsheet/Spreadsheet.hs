@@ -17,7 +17,9 @@ import Lens.Micro.Platform
 
 type CellID = Int
 
-data Cell = Str String | Ref CellID String
+data Cell = Ref CellID String
+          | Str String
+          | Number Rational
   deriving (Eq, Show, Generic)
 
 data Spreadsheet = SS { _sheet :: Gr Cell Int

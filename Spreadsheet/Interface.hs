@@ -17,17 +17,22 @@ emptySpreadsheet :: Spreadsheet
 emptySpreadsheet = SS empty Nothing
 
 -- text representation for showing
+-- pattern matches on Cell
+-- number of shown decimals needs to be limited!
 getCellText :: CellID -> Spreadsheet -> String
 getCellText id ss = case lab (ss^.sheet) id of
                        Nothing        -> ""
                        Just (Str str) -> str
+                       Just (Number num) -> show $ fromRational num
                        Just (Ref id' _) -> getCellText id' ss
 
 -- user given code for cell
+-- pattern matches on Cell
 getCellCode :: CellID -> Spreadsheet -> String
 getCellCode id ss = case lab (ss^.sheet) id of
                       Nothing -> ""
                       Just (Str str) -> str
+                      Just (Number num) -> show $ fromRational num
                       Just (Ref _ str) -> str
 
 setCellState :: CellID -> String -> Spreadsheet -> Spreadsheet
@@ -63,8 +68,10 @@ isLegal id [ref] ss = case sp ref id $ ss^.sheet of
                          Nothing -> True
                          Just _  -> False
 
--- this needs to be generalized 
+-- this needs to be generalized
+-- pattern matches on Cell
 references :: Cell -> [CellID]
 references (Str _)    = []
+references (Number _)    = []
 references (Ref cell _) = [cell]
 
