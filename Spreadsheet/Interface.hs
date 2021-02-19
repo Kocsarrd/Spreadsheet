@@ -20,31 +20,35 @@ emptySpreadsheet = SS empty Nothing
 -- text representation for showing
 -- pattern matches on Cell
 -- number of shown decimals is hardcoded!
+-- here I could use show instances, but the derived instance is better for debugging
 getCellText :: CellID -> Spreadsheet -> String
 getCellText id ss = case lab (ss^.sheet) id of
                        Nothing        -> ""
-                       Just (Str str) -> str
-                       Just (Number num) -> show $ fromRational $ dpRound 3 num
-                       Just (Ref id' _) -> getCellText id' ss
-
+                       Just (For for) -> maybe "Nothing" showCell' $ cache for 
+                       Just (Val cell') -> showCell' cell'
+                       
 -- user given code for cell
 -- pattern matches on Cell
 getCellCode :: CellID -> Spreadsheet -> String
 getCellCode id ss = case lab (ss^.sheet) id of
                       Nothing -> ""
-                      Just (Str str) -> str
-                      Just (Number num) -> show $ fromRational num
-                      Just (Ref _ str) -> str
+                      Just (For for) -> code for
+                      Just (Val cell') -> showCell' cell'
 
+showCell' :: Cell' -> String
+showCell' (Str str) = str
+showCell' (Number num) = show $ fromRational $ dpRound 3 num
+ 
+                        
 setCellState :: CellID -> String -> Spreadsheet -> Spreadsheet
 setCellState id' str' ss'
   | isLegal id' newRefs ssB' = overSH ssN $ legalSet id' cell' 
   | otherwise = ss'
   where
-    legalSet id (Str "") sh
+    legalSet id (Val (Str "")) sh
       | null oldRefs = delNode id sh
       | otherwise = case match id sh of
-                      (Just (p, _, l, s), cg) -> (p, id, Str "", s) & cg
+                      (Just (p, _, l, s), cg) -> (p, id, Val (Str ""), s) & cg
                       (Nothing,            _) -> error "node does not exist!"
     legalSet _ _ _ = ssN^.sheet
     oldRefs = suc (ss'^.sheet) id'
@@ -69,10 +73,10 @@ isLegal id [ref] ss = case sp ref id $ ss^.sheet of
                          Nothing -> True
                          Just _  -> False
 
--- this needs to be generalized
 -- pattern matches on Cell
 references :: Cell -> [CellID]
-references (Str _)    = []
-references (Number _)    = []
-references (Ref cell _) = [cell]
-
+references (For for) = foldr folder [] $ value for
+  where
+    folder (Code _) refs = refs
+    folder (Refs r) refs = r ++ refs
+references _ = []

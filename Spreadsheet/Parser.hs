@@ -10,34 +10,22 @@ import Text.Parsec.String
 
 import Spreadsheet.Spreadsheet
 
+-- cell representation of user giver string
 rep :: String -> Cell
-rep str = case parse (cellParser str) "" str of
+rep str = case parse (cellP str) "" str of
   Right cell -> cell
-  _          -> error "parse error"
+  Left  err  -> error $ show err
 
-cellParser :: String -> Parser Cell
-cellParser str = try (formula str)
-                  <|> (Number <$> try number)
-                  <|> (Str <$> many anyChar)
+cellP :: String -> Parser Cell
+cellP str = try numberP
+            <|> formulaP str
+            <|> (many anyChar <&> Str <&> Val)
 
-
-formula :: String -> Parser Cell
-formula str = do
-  spaces *> char '=' *> char '§'
-  n <- letterToNum <$> (toUpper <$> letter)
-  m <- cellNum
-  char '§' <* spaces <* notFollowedBy anyChar
-  return $ Ref (fromEnum (n,m)) str
-
-letterToNum :: Char -> Int
-letterToNum c = fromEnum c - 65
-
-cellNum :: Parser Int
-cellNum = read <$> many1 digit
-
-number :: Parser Rational
-number = fmap rd $ liftA2 (++) integer decimal <* spaces <* notFollowedBy anyChar
+-- parse a numeric value
+numberP :: Parser Cell
+numberP = rational <&> Number <&> Val
   where
+    rational = fmap rd $ spaces *> liftA2 (++) integer decimal <* spaces <* notFollowedBy anyChar
     rd = flip approxRational 0 . (read :: String -> Float)
     decimal  = option "" $ liftA2 (:) (char '.') digits
     digits = many1 digit
@@ -45,12 +33,18 @@ number = fmap rd $ liftA2 (++) integer decimal <* spaces <* notFollowedBy anyCha
     minus = liftA2 (:) (char '-') digits
     integer = plus <|> minus <|> digits
 
-code :: Parser String
-code = many1 $ satisfy (/= '§')
+-- parse a formula
+formulaP :: String -> Parser Cell
+formulaP str = char '=' *> many1 (refsP <|> codeP) <&> Formula str Nothing <&> For
 
+-- parse Code (ForPiece)
+codeP :: Parser ForPiece
+codeP = fmap Code $ many1 $ satisfy (/= '§')
+
+-- parse Refs (ForPiece)
 -- currently a cell row identifier may only contain a single letter
-reference :: Parser [CellID]
-reference = char '§' *> (try listRef <|> singleRef) <* char '§'
+refsP :: Parser ForPiece
+refsP = fmap Refs $ char '§' *> (try listRef <|> singleRef) <* char '§'
   where
     singleRef = ref <&> fromEnum <&> pure
     listRef = do
@@ -62,3 +56,6 @@ reference = char '§' *> (try listRef <|> singleRef) <* char '§'
       n <- letter <&> toUpper <&> letterToNum
       m <- cellNum
       return $ (n,m)
+    cellNum :: Parser Int
+    cellNum = read <$> many1 digit
+    letterToNum c = fromEnum c - 65
