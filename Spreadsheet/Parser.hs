@@ -8,7 +8,7 @@ import Text.Parsec
 import Text.Parsec.Char
 import Text.Parsec.String
 
-import Spreadsheet.Spreadsheet
+import Spreadsheet.Types
 
 -- cell representation of user giver string
 -- I might need better exception handling

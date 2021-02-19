@@ -12,7 +12,7 @@ import Data.Maybe (isNothing)
 import Data.Ratio.Rounding
 import Lens.Micro.Platform hiding ((&))
 
-import Spreadsheet.Spreadsheet
+import Spreadsheet.Types
 import Spreadsheet.Parser
 
 emptySpreadsheet :: Spreadsheet
@@ -67,7 +67,6 @@ getSelected ss = ss^.selected
 setSelected :: CellID -> Spreadsheet -> Spreadsheet
 setSelected = set selected . Just
 
--- this needs to be generalized
 isLegal :: CellID -> [CellID] -> Spreadsheet -> Bool
 isLegal id refs ss = all (\ref -> isNothing $ sp ref id $ ss^.sheet) refs
 

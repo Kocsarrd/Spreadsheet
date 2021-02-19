@@ -6,7 +6,7 @@ import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.Events
 
 import Persistence
-import Spreadsheet.Spreadsheet
+import Spreadsheet.Types
 import Spreadsheet.Interface
 
 runGUI :: IORef Spreadsheet -> IO ()
