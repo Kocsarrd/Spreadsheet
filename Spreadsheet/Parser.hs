@@ -11,10 +11,11 @@ import Text.Parsec.String
 import Spreadsheet.Spreadsheet
 
 -- cell representation of user giver string
+-- I might need better exception handling
 rep :: String -> Cell
 rep str = case parse (cellP str) "" str of
   Right cell -> cell
-  Left  err  -> error $ show err
+  Left  err  -> Val $ Str "rekt"
 
 cellP :: String -> Parser Cell
 cellP str = try numberP

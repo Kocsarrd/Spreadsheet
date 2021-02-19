@@ -8,6 +8,7 @@ module Spreadsheet.Interface
 import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.PatriciaTree
 import Data.Graph.Inductive.Query
+import Data.Maybe (isNothing)
 import Data.Ratio.Rounding
 import Lens.Micro.Platform hiding ((&))
 
@@ -68,10 +69,7 @@ setSelected = set selected . Just
 
 -- this needs to be generalized
 isLegal :: CellID -> [CellID] -> Spreadsheet -> Bool
-isLegal id []  _  = True
-isLegal id [ref] ss = case sp ref id $ ss^.sheet of
-                         Nothing -> True
-                         Just _  -> False
+isLegal id refs ss = all (\ref -> isNothing $ sp ref id $ ss^.sheet) refs
 
 -- pattern matches on Cell
 references :: Cell -> [CellID]
