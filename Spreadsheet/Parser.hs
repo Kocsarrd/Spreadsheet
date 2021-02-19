@@ -2,6 +2,7 @@ module Spreadsheet.Parser (rep) where
 
 import Control.Applicative (liftA2)
 import Data.Char
+import Data.Functor ((<&>))
 import Data.Ratio
 import Text.Parsec
 import Text.Parsec.Char
@@ -44,13 +45,23 @@ number = fmap rd $ liftA2 (++) integer decimal <* spaces <* notFollowedBy anyCha
     minus = liftA2 (:) (char '-') digits
     integer = plus <|> minus <|> digits
 
+code :: Parser String
+code = many1 $ satisfy (/= '§')
 
-var :: Parser String
-var = do
-    fc <- firstChar
-    rest <- many nonFirstChar
-    return (fc:rest)
+newtype Ref' = Ref' CellID
+  deriving (Eq, Show)
+
+-- currently a cell row identifier may only contain a single letter
+reference :: Parser [Ref']
+reference = char '§' *> (try listRef <|> singleRef) <* char '§'
   where
-    firstChar = satisfy (\a -> isLetter a || a == '_')
-    nonFirstChar = satisfy (\a -> isDigit a || isLetter a || a == '_')
-
+    singleRef = ref <&> fromEnum <&> Ref' <&> pure
+    listRef = do
+      (r1,c1) <- ref
+      char ':'
+      (r2,c2) <- ref
+      return [Ref' $ fromEnum (r,c) | r <- [r1..r2], c <- [c1..c2]]
+    ref = do
+      n <- letter <&> toUpper <&> letterToNum
+      m <- cellNum
+      return $ (n,m)
