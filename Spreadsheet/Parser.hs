@@ -48,19 +48,16 @@ number = fmap rd $ liftA2 (++) integer decimal <* spaces <* notFollowedBy anyCha
 code :: Parser String
 code = many1 $ satisfy (/= '§')
 
-newtype Ref' = Ref' CellID
-  deriving (Eq, Show)
-
 -- currently a cell row identifier may only contain a single letter
-reference :: Parser [Ref']
+reference :: Parser [CellID]
 reference = char '§' *> (try listRef <|> singleRef) <* char '§'
   where
-    singleRef = ref <&> fromEnum <&> Ref' <&> pure
+    singleRef = ref <&> fromEnum <&> pure
     listRef = do
       (r1,c1) <- ref
       char ':'
       (r2,c2) <- ref
-      return [Ref' $ fromEnum (r,c) | r <- [r1..r2], c <- [c1..c2]]
+      return [fromEnum (r,c) | r <- [r1..r2], c <- [c1..c2]]
     ref = do
       n <- letter <&> toUpper <&> letterToNum
       m <- cellNum
