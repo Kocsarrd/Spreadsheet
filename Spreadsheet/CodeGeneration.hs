@@ -3,8 +3,6 @@ module Spreadsheet.CodeGeneration where
 import Data.List (intercalate)
 import Data.List.Split (splitOn)
 import Spreadsheet.Types
--- need to remove this
-import Spreadsheet.Parser
 
 -- generate code for a list of cells
 -- it is assumed that a cell only depends on cells that precede it in the list
@@ -29,5 +27,5 @@ cellG (For (Formula _ _ pieces)) = foldr go "" pieces
   where
     go (Code code) acc = code ++ acc
     go (Refs [id]) acc = 'v' : show id ++ acc
-    go (Refs ids)  acc = '[' : (intercalate "," $ map (('v':) . show) ids) ++ "]"
+      go (Refs ids)  acc = '[' : (intercalate "," $ map (('v':) . show) ids) ++ "]"
 
