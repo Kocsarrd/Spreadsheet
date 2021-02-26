@@ -2,7 +2,8 @@ module Spreadsheet.Interface
   (
   emptySpreadsheet,
   getCellText, getCellCode, setCellState,
-  getSelected, setSelected
+  getSelected, setSelected,
+  getLogMessage
   ) where
 
 import Data.Graph.Inductive.Graph
@@ -16,7 +17,7 @@ import Spreadsheet.Types
 import Spreadsheet.Parser
 
 emptySpreadsheet :: Spreadsheet
-emptySpreadsheet = SS empty Nothing
+emptySpreadsheet = SS empty Nothing Nothing
 
 -- text representation for showing
 -- pattern matches on Cell
@@ -35,16 +36,15 @@ getCellCode id ss = case lab (ss^.sheet) id of
                       Nothing -> ""
                       Just (For for) -> code for
                       Just (Val cell') -> showCell' cell'
-
+                      
 showCell' :: Cell' -> String
 showCell' (Str str) = str
 showCell' (Number num) = show $ fromRational $ dpRound 3 num
- 
                         
 setCellState :: CellID -> String -> Spreadsheet -> Spreadsheet
 setCellState id' str' ss'
-  | isLegal id' newRefs ssB' = overSH ssN $ legalSet id' cell' 
-  | otherwise = ss'
+  | isLegal id' newRefs ssB' = set logMessage (Just $ "update successful: " ++ toCellName id') $ overSH ssN $ legalSet id' cell' 
+  | otherwise = set logMessage (Just $ "cyclic reference - update failed: " ++ toCellName id') $ ss'
   where
     legalSet id (Val (Str "")) sh
       | null oldRefs = delNode id sh
@@ -67,8 +67,18 @@ getSelected ss = ss^.selected
 setSelected :: CellID -> Spreadsheet -> Spreadsheet
 setSelected = set selected . Just
 
+getLogMessage :: Spreadsheet -> String
+getLogMessage ss = case ss^.logMessage of
+                     Just str -> str
+                     Nothing  -> ""
+
 isLegal :: CellID -> [CellID] -> Spreadsheet -> Bool
 isLegal id refs ss = all (\ref -> isNothing $ sp ref id $ ss^.sheet) refs
+
+toCellName :: CellID -> String
+toCellName id = toEnum (r+65) : show c
+  where
+    (r,c) = toEnum id :: (Int,Int)
 
 -- pattern matches on Cell
 references :: Cell -> [CellID]

@@ -6,7 +6,7 @@
 module Spreadsheet.Types (
   CellID,Cell'(..), ForPiece(..), Formula(..), Cell(..),
   Spreadsheet(..),
-  sheet, selected,
+  sheet, selected, logMessage,
   overSH
   ) where
 
@@ -35,6 +35,7 @@ data Cell = Val Cell' | For Formula
 
 data Spreadsheet = SS { _sheet :: Gr Cell Int
                       , _selected :: Maybe CellID
+                      , _logMessage :: Maybe String
                       }
   deriving(Eq, Show, Generic)
                    

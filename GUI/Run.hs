@@ -18,13 +18,14 @@ runGUI ssR = do
                   containerChild := vbox]
 
   menu <- getMenubar ssR
-  (table, entryKeys) <- getTable ssR
-  editor <- getEditor ssR entryKeys
-  log <- getLog
+  (logWindow, log) <- getLog
+  buffer <- textViewGetBuffer log
+  (table, entryKeys) <- getTable ssR buffer
+  editor <- getEditor ssR buffer entryKeys 
   boxPackStart vbox menu PackNatural 0
   boxPackStart vbox editor PackNatural 0
   boxPackStart vbox table PackGrow 0
-  boxPackStart vbox log PackGrow 0
+  boxPackStart vbox logWindow PackGrow 0
     
   windowMaximize mainWindow
   widgetShowAll mainWindow
@@ -35,11 +36,11 @@ runGUI ssR = do
 -- one line editor on top of the window
 ---------------------------------------
 
-getEditor :: IORef Spreadsheet -> [(Entry, (Int, Int))] -> IO Entry
-getEditor ssR entryKeys = do
+getEditor :: IORef Spreadsheet -> TextBuffer -> [(Entry, (Int, Int))] -> IO Entry
+getEditor ssR log entryKeys = do
   editor <- entryNew
   onFocusIn editor $ editorGetsFocus editor ssR
-  onFocusOut editor $ editorLosesFocus editor ssR entryKeys
+  onFocusOut editor $ editorLosesFocus editor log ssR entryKeys
   return editor
 
 editorGetsFocus :: Entry -> IORef Spreadsheet -> Event -> IO Bool
@@ -50,24 +51,25 @@ editorGetsFocus editor ssR e = do
     Just key -> entrySetText editor (getCellCode key ss)
   return False
   
-editorLosesFocus :: Entry -> IORef Spreadsheet -> [(Entry, (Int, Int))] -> Event -> IO Bool
-editorLosesFocus editor ssR entryKeys e = do
+editorLosesFocus :: Entry -> TextBuffer -> IORef Spreadsheet -> [(Entry, (Int, Int))] -> Event -> IO Bool
+editorLosesFocus editor log ssR entryKeys e = do
   ss <- readIORef ssR
   newText <- entryGetText editor
   case getSelected ss of
     Nothing -> pure ()
     Just key -> unless (newText == getCellText key ss) $
                   modifyIORef' ssR $ setCellState key newText
-  forM_ entryKeys $ \(e,k) -> do
-    newText <- getCellText (fromEnum k) <$> readIORef ssR
-    entrySetText e newText
+  ss <- readIORef ssR
+  forM_ entryKeys $ \(e,k) ->
+    entrySetText e $ getCellText (fromEnum k) ss    
+  textBufferSetText log $ getLogMessage ss
   return False
 
 ------------------------------------
 -- multiline text widget for logging
 ------------------------------------
 
-getLog :: IO ScrolledWindow
+getLog :: IO (ScrolledWindow, TextView)
 getLog = do
   log <- textViewNew
   set log [ textViewEditable := True
@@ -77,7 +79,7 @@ getLog = do
   logWindow <- scrolledWindowNew Nothing Nothing
   set logWindow [ containerChild := log
                 , scrolledWindowHscrollbarPolicy := PolicyNever]
-  return logWindow
+  return (logWindow, log)
 
 
 --------------------------------------
@@ -114,8 +116,8 @@ getMenubar ssR = do
 -- table for representing the spreadsheet
 -----------------------------------------
 
-getTable :: IORef Spreadsheet -> IO (Table, [(Entry, (Int, Int))])
-getTable spreadsheet = do
+getTable :: IORef Spreadsheet -> TextBuffer -> IO (Table, [(Entry, (Int, Int))])
+getTable spreadsheet log = do
   table <- tableNew (sizeY+2) (sizeX+1) True
   forM_ [0..sizeX] $ \n -> do
     label <- labelNew $ Just ""
@@ -134,7 +136,7 @@ getTable spreadsheet = do
       return (entry, (m,n))
   forM_ entryKeys $ \(entry, mn) -> do
     onFocusIn entry $ cellGetsFocus entry mn spreadsheet 
-    onFocusOut entry $ cellLosesFocus entry mn spreadsheet entryKeys
+    onFocusOut entry $ cellLosesFocus entry log mn spreadsheet entryKeys
   return (table, entryKeys)
 
 
@@ -146,19 +148,17 @@ cellGetsFocus entry key ssR _ = do
   putStrLn $ "on get: " ++ show ss
   return False
 
-cellLosesFocus :: Entry -> (Int, Int) -> IORef Spreadsheet -> [(Entry, (Int, Int))] -> Event -> IO Bool
-cellLosesFocus entry key ssR entryKeys _ = do
+cellLosesFocus :: Entry -> TextBuffer -> (Int, Int) -> IORef Spreadsheet -> [(Entry, (Int, Int))] -> Event -> IO Bool
+cellLosesFocus entry log key ssR entryKeys _ = do
   spreadsheet <- readIORef ssR
   entryText <- entryGetText entry
   unless (entryText == getCellText (fromEnum key) spreadsheet) $
     modifyIORef' ssR $ setCellState (fromEnum key) entryText
-  
-  forM_ entryKeys $ \(e,k) -> do
-    newText <- getCellText (fromEnum k) <$> readIORef ssR
-    entrySetText e newText
-  --debug
-  --putStrLn $ "on lose: " ++ show spreadsheet
 
+  ss <- readIORef ssR
+  forM_ entryKeys $ \(e,k) ->
+    entrySetText e $ getCellText (fromEnum k) ss
+  textBufferSetText log $ getLogMessage ss
   return False
 
 
