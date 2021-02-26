@@ -3,19 +3,29 @@ module Spreadsheet.CodeGeneration where
 import Data.List (intercalate)
 import Data.List.Split (splitOn)
 import Spreadsheet.Types
+-- need to remove this
 import Spreadsheet.Parser
 
+-- generate code for a list of cells
+-- it is assumed that a cell only depends on cells that precede it in the list
+generateCode :: [(Cell,CellID)] -> String
+generateCode xs = foldr go "" xs ++ final
+  where
+    go (cell,id) acc = ("let " ++ 'v' : show id ++ " = " ++ cellG cell ++ " in ") ++ acc
+    final = '(' : (intercalate "," $ map (('v':) . show . snd) xs) ++ ")"
+
+  
 -- generate code for a single cell
-cell :: Cell -> String
-cell (Val (Str str)) = '"' : str ++ "\""
-cell (Val (Number num)) = trimmed
+cellG :: Cell -> String
+cellG (Val (Str str)) = '"' : str ++ "\""
+cellG (Val (Number num)) = trimmed
   where
     trimmed = if decimal == "0" then integer else numS
     [integer,decimal] = splitOn "." numS
     numS = show $ fromRational num
 
-cell (For (Formula _ (Just val) _)) = cell $ Val val
-cell (For (Formula _ _ pieces)) = foldr go "" pieces
+cellG (For (Formula _ (Just val) _)) = cellG $ Val val
+cellG (For (Formula _ _ pieces)) = foldr go "" pieces
   where
     go (Code code) acc = code ++ acc
     go (Refs [id]) acc = 'v' : show id ++ acc
