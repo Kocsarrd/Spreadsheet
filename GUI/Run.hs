@@ -87,7 +87,7 @@ getLog = do
 --------------------------------------
 
 getFileChooserDialog :: FileChooserAction -> IO FileChooserDialog
-getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ "sheet") Nothing act
+getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ " sheet") Nothing act
                                    [("Cancel", ResponseCancel), (title, ResponseAccept)]                                
   where
     title = case act of
