@@ -9,6 +9,8 @@ import Persistence
 import Spreadsheet.Types
 import Spreadsheet.Interface
 
+type ViewUpdateData = (TextBuffer, [(Entry, (Int, Int))])
+
 runGUI :: IORef Spreadsheet -> IO ()
 runGUI ssR = do
   initGUI
@@ -19,8 +21,9 @@ runGUI ssR = do
   (logWindow, log) <- getLog
   buffer <- textViewGetBuffer log
   (table, entryKeys) <- getTable ssR buffer
-  menu <- getMenubar ssR buffer entryKeys
-  editor <- getEditor ssR buffer entryKeys 
+  let vad = (buffer, entryKeys)
+  menu <- getMenubar ssR vad
+  editor <- getEditor ssR vad 
   boxPackStart vbox menu PackNatural 0
   boxPackStart vbox editor PackNatural 0
   boxPackStart vbox table PackGrow 0
@@ -35,11 +38,11 @@ runGUI ssR = do
 -- one line editor on top of the window
 ---------------------------------------
 
-getEditor :: IORef Spreadsheet -> TextBuffer -> [(Entry, (Int, Int))] -> IO Entry
-getEditor ssR log entryKeys = do
+getEditor :: IORef Spreadsheet -> ViewUpdateData -> IO Entry
+getEditor ssR vad = do
   editor <- entryNew
   onFocusIn editor $ editorGetsFocus editor ssR
-  onFocusOut editor $ editorLosesFocus editor log ssR entryKeys
+  onFocusOut editor $ editorLosesFocus editor ssR vad
   return editor
 
 editorGetsFocus :: Entry -> IORef Spreadsheet -> Event -> IO Bool
@@ -50,15 +53,15 @@ editorGetsFocus editor ssR e = do
     Just key -> entrySetText editor (getCellCode key ss)
   return False
   
-editorLosesFocus :: Entry -> TextBuffer -> IORef Spreadsheet -> [(Entry, (Int, Int))] -> Event -> IO Bool
-editorLosesFocus editor log ssR entryKeys e = do
+editorLosesFocus :: Entry -> IORef Spreadsheet -> ViewUpdateData -> Event -> IO Bool
+editorLosesFocus editor ssR vad@(log, entryKeys) e = do
   ss <- readIORef ssR
   newText <- entryGetText editor
   case getSelected ss of
     Nothing -> pure ()
     Just key -> unless (newText == getCellText key ss) $
                   modifyIORef' ssR $ setCellState key newText
-  updateView ssR log entryKeys
+  updateView ssR vad
   return False
 
 ------------------------------------
@@ -95,14 +98,14 @@ getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ " sheet") Noth
 -- menubar for basic actions
 ----------------------------
 
-getMenubar :: IORef Spreadsheet -> TextBuffer -> [(Entry, (Int, Int))] -> IO HButtonBox
-getMenubar ssR log entryKeys = do
+getMenubar :: IORef Spreadsheet -> ViewUpdateData -> IO HButtonBox
+getMenubar ssR vad@(log, entryKeys) = do
   menu <- hButtonBoxNew
   buttonBoxSetLayout menu ButtonboxStart
   saveButton <- buttonNewWithMnemonic "_Save"
   onClicked saveButton $ saveAction ssR
   loadButton <- buttonNewWithMnemonic "_Load"
-  onClicked loadButton $ loadAction ssR log entryKeys
+  onClicked loadButton $ loadAction ssR vad
   boxPackStart menu saveButton PackNatural 0
   boxPackStart menu loadButton PackNatural 0
   return menu
@@ -132,7 +135,7 @@ getTable spreadsheet log = do
       return (entry, (m,n))
   forM_ entryKeys $ \(entry, mn) -> do
     onFocusIn entry $ cellGetsFocus entry mn spreadsheet 
-    onFocusOut entry $ cellLosesFocus entry log mn spreadsheet entryKeys
+    onFocusOut entry $ cellLosesFocus entry mn spreadsheet (log, entryKeys)
   return (table, entryKeys)
 
 
@@ -144,13 +147,13 @@ cellGetsFocus entry key ssR _ = do
   putStrLn $ "on get: " ++ show ss
   return False
 
-cellLosesFocus :: Entry -> TextBuffer -> (Int, Int) -> IORef Spreadsheet -> [(Entry, (Int, Int))] -> Event -> IO Bool
-cellLosesFocus entry log key ssR entryKeys _ = do
+cellLosesFocus :: Entry -> (Int, Int) -> IORef Spreadsheet -> ViewUpdateData -> Event -> IO Bool
+cellLosesFocus entry key ssR vad@(log,entryKeys)  _ = do
   spreadsheet <- readIORef ssR
   entryText <- entryGetText entry
   unless (entryText == getCellText (fromEnum key) spreadsheet) $
     modifyIORef' ssR $ setCellState (fromEnum key) entryText
-  updateView ssR log entryKeys
+  updateView ssR vad
   return False
 
 
@@ -163,11 +166,8 @@ sizeY = 19
 -- update view based on spreadsheet state
 -----------------------------------------
 
-updateView :: IORef Spreadsheet     -> -- the spreadsheet
-              TextBuffer            -> -- the multiline log
-              [(Entry, (Int, Int))] -> -- entry-key map
-              IO ()
-updateView ssR log entryKeys = do
+updateView :: IORef Spreadsheet -> ViewUpdateData -> IO ()
+updateView ssR (log, entryKeys) = do
   ss <- readIORef ssR
   forM_ entryKeys $ \(e,k) ->
     entrySetText e $ getCellText (fromEnum k) ss
@@ -177,8 +177,8 @@ updateView ssR log entryKeys = do
 -- persistence actions, this will be moved
 ------------------------------------------
 
-loadAction :: IORef Spreadsheet -> TextBuffer -> [(Entry, (Int, Int))] -> IO ()
-loadAction ssR log entryKeys = do
+loadAction :: IORef Spreadsheet -> ViewUpdateData -> IO ()
+loadAction ssR vad = do
   dialog <- getFileChooserDialog FileChooserActionOpen
   widgetShow dialog
   response <- dialogRun dialog
@@ -187,7 +187,7 @@ loadAction ssR log entryKeys = do
                          case fname of
                            Nothing -> pure ()
                            Just file -> loadSheet file >>= either putStrLn (writeIORef ssR)
-                                        >> updateView ssR log entryKeys
+                                        >> updateView ssR vad
     _ -> pure ()
   widgetDestroy dialog
 
