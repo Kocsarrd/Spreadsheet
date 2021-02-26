@@ -17,26 +17,6 @@ import Lens.Micro.Platform
 
 type CellID = Int
 
-{-
-data Cell = Ref CellID String
-          | Str String
-          | Number Rational
-  deriving (Eq, Show, Generic)
--}
-
-{-
-formula:
-+user code
-+maybe cached value
-+[Stuff]
-
-Stuff = Code str | Refs [CellID]
-
-Cell' = Str String | Number Rational
-Cell = Val Cell' | For Formula
-
--}
-
 data Cell' = Str String | Number Rational
   deriving (Eq, Show, Generic)
 

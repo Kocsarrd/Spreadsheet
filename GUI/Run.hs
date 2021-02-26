@@ -20,9 +20,11 @@ runGUI ssR = do
   menu <- getMenubar ssR
   (table, entryKeys) <- getTable ssR
   editor <- getEditor ssR entryKeys
+  log <- getLog
   boxPackStart vbox menu PackNatural 0
   boxPackStart vbox editor PackNatural 0
   boxPackStart vbox table PackGrow 0
+  boxPackStart vbox log PackGrow 0
     
   windowMaximize mainWindow
   widgetShowAll mainWindow
@@ -60,6 +62,23 @@ editorLosesFocus editor ssR entryKeys e = do
     newText <- getCellText (fromEnum k) <$> readIORef ssR
     entrySetText e newText
   return False
+
+------------------------------------
+-- multiline text widget for logging
+------------------------------------
+
+getLog :: IO ScrolledWindow
+getLog = do
+  log <- textViewNew
+  set log [ textViewEditable := True
+          , textViewLeftMargin := 10
+          , textViewRightMargin := 10
+          ]
+  logWindow <- scrolledWindowNew Nothing Nothing
+  set logWindow [ containerChild := log
+                , scrolledWindowHscrollbarPolicy := PolicyNever]
+  return logWindow
+
 
 --------------------------------------
 -- file chooser for loading and saving
