@@ -68,7 +68,7 @@ editorLosesFocus editor log ssR entryKeys e = do
 getLog :: IO (ScrolledWindow, TextView)
 getLog = do
   log <- textViewNew
-  set log [ textViewEditable := True
+  set log [ textViewEditable := False
           , textViewLeftMargin := 10
           , textViewRightMargin := 10
           ]
