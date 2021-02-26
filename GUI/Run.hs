@@ -54,7 +54,7 @@ editorGetsFocus editor ssR e = do
   return False
   
 editorLosesFocus :: Entry -> IORef Spreadsheet -> ViewUpdateData -> Event -> IO Bool
-editorLosesFocus editor ssR vad@(log, entryKeys) e = do
+editorLosesFocus editor ssR vad e = do
   ss <- readIORef ssR
   newText <- entryGetText editor
   case getSelected ss of
@@ -99,7 +99,7 @@ getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ " sheet") Noth
 ----------------------------
 
 getMenubar :: IORef Spreadsheet -> ViewUpdateData -> IO HButtonBox
-getMenubar ssR vad@(log, entryKeys) = do
+getMenubar ssR vad = do
   menu <- hButtonBoxNew
   buttonBoxSetLayout menu ButtonboxStart
   saveButton <- buttonNewWithMnemonic "_Save"
@@ -148,7 +148,7 @@ cellGetsFocus entry key ssR _ = do
   return False
 
 cellLosesFocus :: Entry -> (Int, Int) -> IORef Spreadsheet -> ViewUpdateData -> Event -> IO Bool
-cellLosesFocus entry key ssR vad@(log,entryKeys)  _ = do
+cellLosesFocus entry key ssR vad  _ = do
   spreadsheet <- readIORef ssR
   entryText <- entryGetText entry
   unless (entryText == getCellText (fromEnum key) spreadsheet) $
