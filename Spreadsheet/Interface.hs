@@ -44,8 +44,10 @@ showCell' (Number num) = show $ fromRational $ dpRound 3 num
 setCellState :: CellID -> String -> Spreadsheet -> Spreadsheet
 setCellState id' str' ss'
   | isLegal id' newRefs ssB' = set logMessage (Just $ "update successful: " ++ toCellName id') $ overSH ssN $ legalSet id' cell' 
-  | otherwise = set logMessage (Just $ "cyclic reference - update failed: " ++ toCellName id') $ ss'
+  | otherwise = set logMessage (Just $ "cyclic reference - update failed: " ++ toCellName id') $
+                  overSH ss' $ cyclicErrorSet id'
   where
+    legalSet :: CellID -> Cell -> Gr Cell Int -> Gr Cell Int
     legalSet id (Val (Str "")) sh
       | null oldRefs = delNode id sh
       | otherwise = case match id sh of
@@ -60,6 +62,11 @@ setCellState id' str' ss'
     ssN = overSH ssB' $ insEdges (zip3 (repeat id') newRefs $ repeat 1)
     newRefs = references cell'
     cell' = rep str'
+    cyclicErrorSet :: CellID -> Gr Cell Int -> Gr Cell Int
+    cyclicErrorSet id sh =  case match id $ sh of
+                              (Just (p, _, l, s), cg) -> (p, id, cyclicRefError, s) & cg
+                              (Nothing,            _) -> insNode (id,cyclicRefError) sh
+    cyclicRefError = For $ Formula str' (Left CycleRefError) Nothing 
 
 getSelected :: Spreadsheet -> Maybe CellID
 getSelected ss = ss^.selected

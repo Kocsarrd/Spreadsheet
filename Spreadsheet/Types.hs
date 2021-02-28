@@ -28,7 +28,7 @@ data FormulaError = NoCache
                   | NoParse
                   | ListTypeError
                   | GHCIError
-                  | RefError
+                  | CycleRefError
   deriving (Eq, Show, Generic)
 
 data Formula = Formula { code :: String
