@@ -28,6 +28,7 @@ data FormulaError = NoParse
                   | CycleRefError
                   | NoCache
                   | ListTypeError
+                  | MissingDepError
                   | GHCIError
                   | TimeoutError
   deriving (Eq, Show, Generic)
@@ -52,13 +53,14 @@ All allowed states of a Formula:
 
            pattern                     |                                            meaning
 ---------------------------------------|--------------------------------------------------------------------------------------------------------
-Formula _ (Left NoParse)       Nothing | the formula could not be parsed
-Formula _ (Left CycleRefError) Nothing | parse was successful, but there is a reference cycle
-Formula _ (Left NoCache)       Just _  | parse was successful, references are valid, but the formula is not evaluated yet
-Formula _ (Left ListTypeError) Just _  | the formula cannot be evaluated, because there is at least one inhomogenous reference list
-Formula _ (Left GHCIError)     Just _  | the formula cannot be evaluated for other reasons (e.g. syntax error, compile error, runtime exception)
-Formula _ (Left TimeoutError)  Just _  | the evaluation timed out, caused most likely by an infinite loop
-Formula _ (Right cell')        Just _  | the evaluation was successful, the result is cell'
+Formula _ (Left NoParse)         Nothing | the formula could not be parsed
+Formula _ (Left CycleRefError)   Nothing | parse was successful, but there is a reference cycle
+Formula _ (Left NoCache)         Just _  | parse was successful, references are valid, but the formula is not evaluated yet
+Formula _ (Left ListTypeError)   Just _  | the formula cannot be evaluated, because there is at least one inhomogenous reference list
+Formula _ (Left MissingDepError) Just _  | the formula cannot be evaluated, because a dependency is not cached
+Formula _ (Left GHCIError)       Just _  | the formula cannot be evaluated for other reasons (e.g. syntax error, compile error, runtime exception)
+Formula _ (Left TimeoutError)    Just _  | the evaluation timed out, caused most likely by an infinite loop
+Formula _ (Right cell')          Just _  | the evaluation was successful, the result is cell'
 ------------------------------------------------------------------------------------------------------------------------------------------------
 -}
 

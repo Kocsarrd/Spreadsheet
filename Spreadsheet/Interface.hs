@@ -16,31 +16,10 @@ import Lens.Micro.Platform hiding ((&))
 import Spreadsheet.Types
 import Spreadsheet.Parser
 
-emptySpreadsheet :: Spreadsheet
-emptySpreadsheet = SS empty Nothing Nothing
+--------------------------------------------------------
+-- for setting the cell state, before evaluation happens
+--------------------------------------------------------
 
--- text representation for showing
--- pattern matches on Cell
--- number of shown decimals is hardcoded!
--- here I could use show instances, but the derived instance is better for debugging
-getCellText :: CellID -> Spreadsheet -> String
-getCellText id ss = case lab (ss^.sheet) id of
-                       Nothing        -> ""
-                       Just (For for) -> either show showCell' $ cache for 
-                       Just (Val cell') -> showCell' cell'
-                       
--- user given code for cell
--- pattern matches on Cell
-getCellCode :: CellID -> Spreadsheet -> String
-getCellCode id ss = case lab (ss^.sheet) id of
-                      Nothing -> ""
-                      Just (For for) -> code for
-                      Just (Val cell') -> showCell' cell'
-                      
-showCell' :: Cell' -> String
-showCell' (Str str) = str
-showCell' (Number num) = show num
-                        
 setCellState :: CellID -> String -> Spreadsheet -> Spreadsheet
 setCellState id' str' ss'
   | isLegal id' newRefs ssB' = set logMessage (Just $ "update successful: " ++ toCellName id') $ overSH ssN $ legalSet id' cell' 
@@ -95,3 +74,29 @@ references (For (Formula _ _ (Just val))) = foldr folder [] $ val
     folder (Code _) refs = refs
     folder (Refs r) refs = r ++ refs
 references _ = []
+
+
+emptySpreadsheet :: Spreadsheet
+emptySpreadsheet = SS empty Nothing Nothing
+
+-- text representation for showing
+-- pattern matches on Cell
+-- number of shown decimals is hardcoded!
+-- here I could use show instances, but the derived instance is better for debugging
+getCellText :: CellID -> Spreadsheet -> String
+getCellText id ss = case lab (ss^.sheet) id of
+                       Nothing        -> ""
+                       Just (For for) -> either show showCell' $ cache for 
+                       Just (Val cell') -> showCell' cell'
+                       
+-- user given code for cell
+-- pattern matches on Cell
+getCellCode :: CellID -> Spreadsheet -> String
+getCellCode id ss = case lab (ss^.sheet) id of
+                      Nothing -> ""
+                      Just (For for) -> code for
+                      Just (Val cell') -> showCell' cell'
+                      
+showCell' :: Cell' -> String
+showCell' (Str str) = str
+showCell' (Number num) = show num
