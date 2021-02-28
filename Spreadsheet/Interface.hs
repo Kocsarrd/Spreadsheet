@@ -20,6 +20,7 @@ import Spreadsheet.Parser
 -- for setting the cell state, before evaluation happens
 --------------------------------------------------------
 
+-- this is not optimal by any means
 setCellState :: CellID -> String -> Spreadsheet -> Spreadsheet
 setCellState id' str' ss'
   | isLegal id' newRefs ssB' = set logMessage (Just $ "update successful: " ++ toCellName id') $ overSH ssN $ legalSet id' cell' 
@@ -33,12 +34,16 @@ setCellState id' str' ss'
                       (Just (p, _, l, s), cg) -> (p, id, Val (Str ""), s) & cg
                       (Nothing,            _) -> error "node does not exist!"
     legalSet _ _ _ = ssN^.sheet
-    oldRefs = suc (ss'^.sheet) id'
+    oldRefs = pre (ss'^.sheet) id'
     ssB = overSH ss' $ delEdges (zip oldRefs $ repeat id')
     ssB' = case match id' $ ssB^.sheet of
              (Just (p, _, l, s), cg) -> set sheet ((p, id', cell', s) & cg) ssB
              (Nothing,            _) -> overSH ssB $ insNode (id', cell')
-    ssN = overSH ssB' $ insEdges (zip3 (repeat id') newRefs $ repeat 1)
+    ssN' = overSH ssB' (\sh -> foldr go sh newRefs)
+    go r sh = case match r sh of
+                (Just _,_) -> sh
+                (Nothing,_) -> insNode (r, Val (Str "")) sh
+    ssN = overSH ssN' $ insEdges (zip3 newRefs (repeat id') $ repeat 1)
     newRefs = references cell'
     cell' = rep str'
     cyclicErrorSet :: CellID -> Gr Cell Int -> Gr Cell Int
