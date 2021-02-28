@@ -24,11 +24,12 @@ data Cell' = Str String | Number Rational
 data ForPiece = Code String | Refs [CellID]
   deriving (Eq, Show, Generic)
 
-data FormulaError = NoCache
-                  | NoParse
+data FormulaError = NoParse
+                  | CycleRefError
+                  | NoCache
                   | ListTypeError
                   | GHCIError
-                  | CycleRefError
+                  | TimeoutError
   deriving (Eq, Show, Generic)
 
 data Formula = Formula { code :: String
@@ -45,7 +46,22 @@ data Spreadsheet = SS { _sheet :: Gr Cell Int
                       , _logMessage :: Maybe String
                       }
   deriving(Eq, Show, Generic)
-                   
+
+{-
+All allowed states of a Formula:
+
+           pattern                     |                                            meaning
+---------------------------------------|--------------------------------------------------------------------------------------------------------
+Formula _ (Left NoParse)       Nothing | the formula could not be parsed
+Formula _ (Left CycleRefError) Nothing | parse was successful, but there is a reference cycle
+Formula _ (Left NoCache)       Just _  | parse was successful, references are valid, but the formula is not evaluated yet
+Formula _ (Left ListTypeError) Just _  | the formula cannot be evaluated, because there is at least one inhomogenous reference list
+Formula _ (Left GHCIError)     Just _  | the formula cannot be evaluated for other reasons (e.g. syntax error, compile error, runtime exception)
+Formula _ (Left TimeoutError)  Just _  | the evaluation timed out, caused most likely by an infinite loop
+Formula _ (Right cell')        Just _  | the evaluation was successful, the result is cell'
+------------------------------------------------------------------------------------------------------------------------------------------------
+-}
+
 makeLenses ''Spreadsheet
 overSH ss f = over sheet f ss
 
