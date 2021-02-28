@@ -4,7 +4,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Spreadsheet.Types (
-  CellID,Cell'(..), ForPiece(..), Formula(..), Cell(..),
+  CellID,Cell'(..), ForPiece(..), FormulaError(..), Formula(..), Cell(..),
   Spreadsheet(..),
   sheet, selected, logMessage,
   overSH
@@ -24,9 +24,16 @@ data Cell' = Str String | Number Rational
 data ForPiece = Code String | Refs [CellID]
   deriving (Eq, Show, Generic)
 
+data FormulaError = NoCache
+                  | NoParse
+                  | ListTypeError
+                  | GHCIError
+                  | RefError
+  deriving (Eq, Show, Generic)
+
 data Formula = Formula { code :: String
-                       , cache :: Maybe Cell'
-                       , value :: [ForPiece]
+                       , cache :: Either FormulaError Cell'
+                       , value :: Maybe [ForPiece]
                        }
   deriving (Eq, Show, Generic)
 
@@ -45,6 +52,8 @@ overSH ss f = over sheet f ss
 instance Serialize Cell' where
 
 instance Serialize ForPiece where
+
+instance Serialize FormulaError where
   
 instance Serialize Formula where
   

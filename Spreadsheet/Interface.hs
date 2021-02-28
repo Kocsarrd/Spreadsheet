@@ -26,7 +26,7 @@ emptySpreadsheet = SS empty Nothing Nothing
 getCellText :: CellID -> Spreadsheet -> String
 getCellText id ss = case lab (ss^.sheet) id of
                        Nothing        -> ""
-                       Just (For for) -> maybe "Nothing" showCell' $ cache for 
+                       Just (For for) -> either show showCell' $ cache for 
                        Just (Val cell') -> showCell' cell'
                        
 -- user given code for cell
@@ -81,8 +81,9 @@ toCellName id = toEnum (r+65) : show c
     (r,c) = toEnum id :: (Int,Int)
 
 -- pattern matches on Cell
+-- if value is nothing (there was no parse), this returns []
 references :: Cell -> [CellID]
-references (For for) = foldr folder [] $ value for
+references (For (Formula _ _ (Just val))) = foldr folder [] $ val
   where
     folder (Code _) refs = refs
     folder (Refs r) refs = r ++ refs

@@ -11,11 +11,11 @@ import Text.Parsec.String
 import Spreadsheet.Types
 
 -- cell representation of user giver string
--- I might need better exception handling
+-- an error may only occur when head str == '='
 rep :: String -> Cell
 rep str = case parse (cellP str) "" str of
   Right cell -> cell
-  Left  err  -> Val $ Str "rekt"
+  Left  err  -> For $ Formula str (Left NoParse) Nothing
 
 cellP :: String -> Parser Cell
 cellP str = try numberP
@@ -36,7 +36,7 @@ numberP = rational <&> Number <&> Val
 
 -- parse a formula
 formulaP :: String -> Parser Cell
-formulaP str = char '=' *> many1 (refsP <|> codeP) <&> Formula str Nothing <&> For
+formulaP str = char '=' *> (Just <$> many1 (refsP <|> codeP)) <&> Formula str (Left NoCache) <&> For
 
 -- parse Code (ForPiece)
 codeP :: Parser ForPiece
