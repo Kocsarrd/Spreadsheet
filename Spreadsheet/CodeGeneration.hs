@@ -1,6 +1,6 @@
 -- {-# LANGUAGE TupleSections #-}
 
-module Spreadsheet.CodeGeneration (generateCode) where
+module Spreadsheet.CodeGeneration (generateCode, GenError(..)) where
 
 import Data.Graph.Inductive (lab,pre)
 import Data.Graph.Inductive.PatriciaTree (Gr) 

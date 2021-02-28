@@ -4,6 +4,7 @@ import Control.Monad
 import Data.IORef
 import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.Events
+import Language.Haskell.Ghcid
 
 import Persistence
 import Spreadsheet.CodeGeneration
@@ -21,29 +22,48 @@ runGUI ssR = do
                   containerChild := vbox]
   (logWindow, log) <- getLog
   buffer <- textViewGetBuffer log
-  (table, entryKeys) <- getTable ssR buffer
+
+  ghci <- initGhci buffer
+  
+  (table, entryKeys) <- getTable ssR buffer ghci
   let vad = (buffer, entryKeys)
   menu <- getMenubar ssR vad
-  editor <- getEditor ssR vad 
+  editor <- getEditor ssR vad ghci
   boxPackStart vbox menu PackNatural 0
   boxPackStart vbox editor PackNatural 0
   boxPackStart vbox table PackGrow 0
   boxPackStart vbox logWindow PackGrow 0
     
   windowMaximize mainWindow
+ 
   widgetShowAll mainWindow
-  onDestroy mainWindow mainQuit
+  onDestroy mainWindow (mainQuit >> stopGhci ghci)
   mainGUI
+
+----------------------------------------
+-- ghci related functions, will be moved
+----------------------------------------
+
+evaluate :: IORef Spreadsheet -> CellID -> Ghci -> TextBuffer -> IO ()
+evaluate ssR id ghci log = do
+  ss <- readIORef ssR
+  case generateCode ss id of
+    Left GenMissingDep -> textBufferSetText log "can't evaluate: missing dependencies"
+    Left GenListType -> textBufferSetText log "can't evaluate: list type error"
+    Right code -> (show <$> exec ghci code) >>= textBufferSetText log
+  
+initGhci :: TextBuffer -> IO Ghci
+initGhci log = fst <$> startGhci "ghci" (Just ".") (\_ _ -> textBufferSetText log "Started GHCi session")
   
 ---------------------------------------
 -- one line editor on top of the window
 ---------------------------------------
 
-getEditor :: IORef Spreadsheet -> ViewUpdateData -> IO Entry
-getEditor ssR vad = do
+getEditor :: IORef Spreadsheet -> ViewUpdateData -> Ghci -> IO Entry
+getEditor ssR vad ghci = do
   editor <- entryNew
   onFocusIn editor $ editorGetsFocus editor ssR
-  onFocusOut editor $ editorLosesFocus editor ssR vad
+  onFocusOut editor $ editorLosesFocus editor ssR vad ghci
   return editor
 
 editorGetsFocus :: Entry -> IORef Spreadsheet -> Event -> IO Bool
@@ -54,8 +74,8 @@ editorGetsFocus editor ssR e = do
     Just key -> entrySetText editor (getCellCode key ss)
   return False
   
-editorLosesFocus :: Entry -> IORef Spreadsheet -> ViewUpdateData -> Event -> IO Bool
-editorLosesFocus editor ssR vad e = do
+editorLosesFocus :: Entry -> IORef Spreadsheet -> ViewUpdateData -> Ghci -> Event -> IO Bool
+editorLosesFocus editor ssR vad@(log,_) ghci e = do
   ss <- readIORef ssR
   newText <- entryGetText editor
   case getSelected ss of
@@ -66,7 +86,7 @@ editorLosesFocus editor ssR vad e = do
   --test line
   case getSelected ss of
     Nothing -> pure ()
-    Just key -> evaluate ssR (toEnum key) vad
+    Just key -> evaluate ssR key ghci log
   return False
 
 ------------------------------------
@@ -120,8 +140,8 @@ getMenubar ssR vad = do
 -- table for representing the spreadsheet
 -----------------------------------------
 
-getTable :: IORef Spreadsheet -> TextBuffer -> IO (Table, [(Entry, (Int, Int))])
-getTable spreadsheet log = do
+getTable :: IORef Spreadsheet -> TextBuffer -> Ghci -> IO (Table, [(Entry, (Int, Int))])
+getTable spreadsheet log ghci = do
   table <- tableNew (sizeY+2) (sizeX+1) True
   forM_ [0..sizeX] $ \n -> do
     label <- labelNew $ Just ""
@@ -140,7 +160,7 @@ getTable spreadsheet log = do
       return (entry, (m,n))
   forM_ entryKeys $ \(entry, mn) -> do
     onFocusIn entry $ cellGetsFocus entry mn spreadsheet 
-    onFocusOut entry $ cellLosesFocus entry mn spreadsheet (log, entryKeys)
+    onFocusOut entry $ cellLosesFocus entry mn spreadsheet (log, entryKeys) ghci
   return (table, entryKeys)
 
 
@@ -152,15 +172,15 @@ cellGetsFocus entry key ssR _ = do
   putStrLn $ "on get: " ++ show ss
   return False
 
-cellLosesFocus :: Entry -> (Int, Int) -> IORef Spreadsheet -> ViewUpdateData -> Event -> IO Bool
-cellLosesFocus entry key ssR vad  _ = do
+cellLosesFocus :: Entry -> (Int, Int) -> IORef Spreadsheet -> ViewUpdateData -> Ghci -> Event -> IO Bool
+cellLosesFocus entry key ssR vad@(log,_) ghci  _ = do
   spreadsheet <- readIORef ssR
   entryText <- entryGetText entry
   unless (entryText == getCellText (fromEnum key) spreadsheet) $
     modifyIORef' ssR $ setCellState (fromEnum key) entryText
   updateView ssR vad
   --test line
-  evaluate ssR key vad
+  evaluate ssR (fromEnum key) ghci log
   return False
 
 
@@ -179,13 +199,6 @@ updateView ssR (log, entryKeys) = do
   forM_ entryKeys $ \(e,k) ->
     entrySetText e $ getCellText (fromEnum k) ss
   textBufferSetText log $ getLogMessage ss
-
--- this is just for testing
-evaluate :: IORef Spreadsheet -> (Int,Int) -> ViewUpdateData -> IO ()
-evaluate ssR key (log,_) = do
-  ss <- readIORef ssR
-  textBufferSetText log $ show $ generateCode ss $ fromEnum key
-  
 
 ------------------------------------------
 -- persistence actions, this will be moved
