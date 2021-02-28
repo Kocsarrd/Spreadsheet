@@ -7,6 +7,7 @@ import Data.Graph.Inductive.PatriciaTree (Gr)
 import Data.Graph.Inductive.Query (bfs)
 import Data.List (intercalate, nub, (\\))
 import Data.List.Split (splitOn)
+import Data.Maybe (fromJust)
 import Lens.Micro ((^.))
 import Spreadsheet.Types
 
@@ -36,6 +37,7 @@ cellG (Val (Number num)) = trimmed
     [integer,decimal] = splitOn "." numS
     numS = show num
 
+-- error is bugged, we need a few more lines
 cellG (For (Formula _ (Right val) _)) = cellG $ Val val
 cellG (For (Formula _ _ (Just pieces))) = foldr go "" pieces
   where
@@ -48,14 +50,15 @@ cellG _ = error "code generation should not have been called"
 -- a cell only depends on cells that precede it in the resulting list
 -- if a dependency's value is not cached, Nothing is returned
 depList :: Gr Cell Int -> CellID -> Maybe [(Cell,CellID)]
-depList sh id = ok >>= (\x -> if x then labeled else Nothing) 
+depList sh id = if ok then Just labeled else Nothing 
   where
-    ok = all cached <$> labeled
-    labeled = mapM (\i -> (,) <$> lab sh i <*> Just i) (outerDeps ++ dependOnId)
-    cached :: (Cell, CellID) -> Bool
-    cached (Val _ ,_) = True
-    cached (For (Formula _ (Right _) _),_) = True
-    cached _ = False  
+    ok = all cached labeledOut
+    labeledOut = map (\i -> (fromJust (lab sh i), i)) outerDeps
+    labeled = labeledOut ++ map (\i -> (fromJust (lab sh i), i)) dependOnId  
     dependOnId = bfs id sh
     outerDeps = nub (dependOnId >>= pre sh) \\ dependOnId
     
+cached :: (Cell, CellID) -> Bool
+cached (Val _ ,_) = True
+cached (For (Formula _ (Right _) _),_) = True
+cached _ = False

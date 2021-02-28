@@ -6,6 +6,7 @@ import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.Events
 
 import Persistence
+import Spreadsheet.CodeGeneration
 import Spreadsheet.Types
 import Spreadsheet.Interface
 
@@ -62,6 +63,10 @@ editorLosesFocus editor ssR vad e = do
     Just key -> unless (newText == getCellText key ss) $
                   modifyIORef' ssR $ setCellState key newText
   updateView ssR vad
+  --test line
+  case getSelected ss of
+    Nothing -> pure ()
+    Just key -> evaluate ssR (toEnum key) vad
   return False
 
 ------------------------------------
@@ -154,6 +159,8 @@ cellLosesFocus entry key ssR vad  _ = do
   unless (entryText == getCellText (fromEnum key) spreadsheet) $
     modifyIORef' ssR $ setCellState (fromEnum key) entryText
   updateView ssR vad
+  --test line
+  evaluate ssR key vad
   return False
 
 
@@ -172,6 +179,13 @@ updateView ssR (log, entryKeys) = do
   forM_ entryKeys $ \(e,k) ->
     entrySetText e $ getCellText (fromEnum k) ss
   textBufferSetText log $ getLogMessage ss
+
+-- this is just for testing
+evaluate :: IORef Spreadsheet -> (Int,Int) -> ViewUpdateData -> IO ()
+evaluate ssR key (log,_) = do
+  ss <- readIORef ssR
+  textBufferSetText log $ show $ generateCode ss $ fromEnum key
+  
 
 ------------------------------------------
 -- persistence actions, this will be moved
