@@ -17,7 +17,7 @@ import Lens.Micro.Platform
 
 type CellID = Int
 
-data Cell' = Str String | Number Rational
+data Cell' = Str String | Number Double
   deriving (Eq, Show, Generic)
 
 -- I need to come up with a better name lol

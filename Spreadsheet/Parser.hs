@@ -24,10 +24,10 @@ cellP str = try numberP
 
 -- parse a numeric value
 numberP :: Parser Cell
-numberP = rational <&> Number <&> Val
+numberP = double <&> Number <&> Val
   where
-    rational = fmap rd $ spaces *> liftA2 (++) integer decimal <* spaces <* notFollowedBy anyChar
-    rd = flip approxRational 0 . (read :: String -> Float)
+    double = fmap rd $ spaces *> liftA2 (++) integer decimal <* spaces <* notFollowedBy anyChar
+    rd = read :: String -> Double
     decimal  = option "" $ liftA2 (:) (char '.') digits
     digits = many1 digit
     plus = char '+' *> digits

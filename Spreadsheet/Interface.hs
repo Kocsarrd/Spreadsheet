@@ -39,7 +39,7 @@ getCellCode id ss = case lab (ss^.sheet) id of
                       
 showCell' :: Cell' -> String
 showCell' (Str str) = str
-showCell' (Number num) = show $ fromRational $ dpRound 3 num
+showCell' (Number num) = show num
                         
 setCellState :: CellID -> String -> Spreadsheet -> Spreadsheet
 setCellState id' str' ss'
