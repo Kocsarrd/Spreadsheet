@@ -1,6 +1,5 @@
 {-# LANGUAGE ViewPatterns #-}
 
--- this file is a complete mess 
 module Spreadsheet.Interface
   (
   emptySpreadsheet,
