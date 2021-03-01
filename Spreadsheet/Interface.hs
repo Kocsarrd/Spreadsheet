@@ -37,9 +37,7 @@ setCellState id' str' ss'
     legalSet _ _ _ = ssN^.sheet
     oldRefs = pre (ss'^.sheet) id'
     ssB = overSH ss' $ delEdges (zip oldRefs $ repeat id')
-    ssB' = case match id' $ ssB^.sheet of
-             (Just (p, _, l, s), cg) -> set sheet ((p, id', cell', s) & cg) ssB
-             (Nothing,            _) -> overSH ssB $ insNode (id', cell')
+    ssB' = overSH ssB $ lookupNodeThen id' (changeNodeLab cell') (const $ insNode (id',cell') $ ssB^.sheet) 
     ssN' = overSH ssB' (\sh -> foldr go sh newRefs)
     go r sh = lookupNodeThen r (const sh) (const $ insNode (r, Val (Str "")) sh) sh
     ssN = overSH ssN' $ insEdges (zip3 newRefs (repeat id') $ repeat 1)

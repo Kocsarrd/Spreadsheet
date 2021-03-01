@@ -35,7 +35,7 @@ cellG (Val (Number num)) = trimmed
     [integer,decimal] = splitOn "." numS
     numS = show num
 
--- error is bugged, we need a few more lines
+-- error is buggy, we need a few more lines
 cellG (For (Formula _ (Right val) _)) = cellG $ Val val
 cellG (For (Formula _ _ (Just pieces))) = foldr go "" pieces
   where
