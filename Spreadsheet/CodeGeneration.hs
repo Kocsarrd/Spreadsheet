@@ -14,6 +14,7 @@ data GenError = GenListType | GenMissingDep
 
 -- generate code from given data
 -- list type check is not yet handled
+-- if id has parse error, GenMissingDep is not informative
 generateCode :: Spreadsheet -> CellID -> Either GenError (String,[CellID])
 generateCode sh id = maybe (Left GenMissingDep) (Right . codeG) $ depList (sh^.sheet) id
   
@@ -42,15 +43,15 @@ cellG (For (Formula _ _ (Just pieces))) = foldr go "" pieces
     go (Code code) acc = code ++ acc
     go (Refs [id]) acc = 'v' : show id ++ acc
     go (Refs ids)  acc = '[' : (intercalate "," $ map (('v':) . show) ids) ++ "]"
-cellG _ = error "code generation should not have been called"
+cellG _ = error "cellG: cell was not ready"
 
 -- collect all cells that depend on or are dependencies of a given cell
 -- a cell only depends on cells that precede it in the resulting list
--- if a dependency's value is not cached, Nothing is returned
+-- if a dependency's value is not ready, Nothing is returned
 depList :: Gr Cell Int -> CellID -> Maybe ([(Cell,CellID)],[(Cell,CellID)])
 depList sh id = if ok then Just (lOuterDeps, lDependOnId) else Nothing 
   where
-    ok = all cached lOuterDeps
+    ok = all cached lOuterDeps && all ready lDependOnId 
     lOuterDeps = map (\i -> (fromJust (lab sh i), i)) outerDeps
     lDependOnId = map (\i -> (fromJust (lab sh i), i)) dependOnId  
     outerDeps = nub (dependOnId >>= pre sh) \\ dependOnId
@@ -60,3 +61,8 @@ cached :: (Cell, CellID) -> Bool
 cached (Val _ ,_) = True
 cached (For (Formula _ (Right _) _),_) = True
 cached _ = False
+
+ready :: (Cell, CellID) -> Bool
+ready ((For (Formula _ (Right val) _)),_) = True
+ready ((For (Formula _ _ (Just pieces))),_) = True
+ready _ = False

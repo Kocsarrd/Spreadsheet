@@ -24,6 +24,7 @@ import Spreadsheet.Parser
 --------------------------------------------------------
 
 -- this is not optimal by any means
+-- log messages don't handle parse errors
 setCellState :: CellID -> String -> Spreadsheet -> Spreadsheet
 setCellState id' str' ss'
   | isLegal id' newRefs ssB' = set logMessage (Just $ "update successful: " ++ toCellName id') $ overSH ssN $ legalSet id' cell' 
