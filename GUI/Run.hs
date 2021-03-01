@@ -50,8 +50,8 @@ evaluate ssR id ghci log = do
   case generateCode ss id of
     Left GenMissingDep -> textBufferSetText log "can't evaluate: missing dependencies"
     Left GenListType -> textBufferSetText log "can't evaluate: list type error"
-    Right code -> (show <$> exec ghci code) >>= textBufferSetText log
-  
+    Right (code,ids) -> (show <$> exec ghci code) >>= (\s -> textBufferSetText log (s ++ show id))
+
 initGhci :: TextBuffer -> IO Ghci
 initGhci log = fst <$> startGhci "ghci" (Just ".") (\_ _ -> textBufferSetText log "Started GHCi session")
   

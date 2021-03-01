@@ -15,7 +15,7 @@ import Spreadsheet.Types
 rep :: String -> Cell
 rep str = case parse (cellP str) "" str of
   Right cell -> cell
-  Left  err  -> For $ Formula str (Left NoParse) Nothing
+  Left  err  -> For $ Formula str (Left FNoParse) Nothing
 
 cellP :: String -> Parser Cell
 cellP str = try numberP
@@ -36,7 +36,7 @@ numberP = double <&> Number <&> Val
 
 -- parse a formula
 formulaP :: String -> Parser Cell
-formulaP str = char '=' *> (Just <$> many1 (refsP <|> codeP)) <&> Formula str (Left NoCache) <&> For
+formulaP str = char '=' *> (Just <$> many1 (refsP <|> codeP)) <&> Formula str (Left FNoCache) <&> For
 
 -- parse Code (ForPiece)
 codeP :: Parser ForPiece

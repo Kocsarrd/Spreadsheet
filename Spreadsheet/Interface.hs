@@ -1,3 +1,5 @@
+{-# LANGUAGE ViewPatterns #-}
+
 module Spreadsheet.Interface
   (
   emptySpreadsheet,
@@ -50,7 +52,14 @@ setCellState id' str' ss'
     cyclicErrorSet id sh =  case match id $ sh of
                               (Just (p, _, l, s), cg) -> (p, id, cyclicRefError, s) & cg
                               (Nothing,            _) -> insNode (id,cyclicRefError) sh
-    cyclicRefError = For $ Formula str' (Left CycleRefError) Nothing 
+    cyclicRefError = For $ Formula str' (Left FCycleRefError) Nothing 
+
+------------------------------
+-- for caching evaluated cells
+------------------------------
+
+cacheCell :: CellID -> Either EvalError String -> Spreadsheet -> Spreadsheet
+cacheCell = undefined
 
 getSelected :: Spreadsheet -> Maybe CellID
 getSelected ss = ss^.selected
@@ -91,7 +100,7 @@ emptySpreadsheet = SS empty Nothing Nothing
 getCellText :: CellID -> Spreadsheet -> String
 getCellText id ss = case lab (ss^.sheet) id of
                        Nothing        -> ""
-                       Just (For for) -> either show showCell' $ cache for 
+                       Just (For for) -> either show showCell' $ for^.cache
                        Just (Val cell') -> showCell' cell'
                        
 -- user given code for cell
@@ -99,7 +108,7 @@ getCellText id ss = case lab (ss^.sheet) id of
 getCellCode :: CellID -> Spreadsheet -> String
 getCellCode id ss = case lab (ss^.sheet) id of
                       Nothing -> ""
-                      Just (For for) -> code for
+                      Just (For for) -> for^.code
                       Just (Val cell') -> showCell' cell'
                       
 showCell' :: Cell' -> String

@@ -14,13 +14,13 @@ data GenError = GenListType | GenMissingDep
 
 -- generate code from given data
 -- list type check is not yet handled
-generateCode :: Spreadsheet -> CellID -> Either GenError String
+generateCode :: Spreadsheet -> CellID -> Either GenError (String,[CellID])
 generateCode sh id = maybe (Left GenMissingDep) (Right . codeG) $ depList (sh^.sheet) id
   
 -- generate code for a list of cells
 -- it is assumed that a cell only depends on cells that precede it in the list
-codeG :: ([(Cell,CellID)],[(Cell,CellID)]) -> String
-codeG (xs,ys) = foldr go "" (xs ++ ys) ++ final
+codeG :: ([(Cell,CellID)],[(Cell,CellID)]) -> (String,[CellID])
+codeG (xs,ys) = (foldr go "" (xs ++ ys) ++ final , map snd ys)
   where
     go (cell,id) acc = ("let " ++ 'v' : show id ++ " = " ++ cellG cell ++ " in ") ++ acc
     final = '(' : (intercalate "," $ map (('v':) . show . snd) ys) ++ ")"

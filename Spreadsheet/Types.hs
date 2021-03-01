@@ -3,12 +3,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Spreadsheet.Types (
-  CellID,Cell'(..), ForPiece(..), FormulaError(..), Formula(..), Cell(..),
-  Spreadsheet(..),
-  sheet, selected, logMessage,
-  overSH
-  ) where
+module Spreadsheet.Types  where
 
 import GHC.Generics
 import Data.Graph.Inductive.PatriciaTree
@@ -17,6 +12,10 @@ import Lens.Micro.Platform
 
 type CellID = Int
 
+-- evaluation error from control to model
+data EvalError = EGhciError | ETimeoutError
+  deriving (Eq, Show)
+
 data Cell' = Str String | Number Double
   deriving (Eq, Show, Generic)
 
@@ -24,22 +23,22 @@ data Cell' = Str String | Number Double
 data ForPiece = Code String | Refs [CellID]
   deriving (Eq, Show, Generic)
 
-data FormulaError = NoParse
-                  | CycleRefError
-                  | NoCache
-                  | ListTypeError
-                  | MissingDepError
-                  | GHCIError
-                  | TimeoutError
+data FormulaError = FNoParse
+                  | FCycleRefError
+                  | FNoCache
+                  | FListTypeError
+                  | FMissingDepError
+                  | FGhciError
+                  | FTimeoutError
   deriving (Eq, Show, Generic)
 
-data Formula = Formula { code :: String
-                       , cache :: Either FormulaError Cell'
-                       , value :: Maybe [ForPiece]
+data Formula = Formula { _code :: String
+                       , _cache :: Either FormulaError Cell'
+                       , _value :: Maybe [ForPiece]
                        }
   deriving (Eq, Show, Generic)
 
-data Cell = Val Cell' | For Formula
+data Cell = Val {_cellV :: Cell'} | For {_cellF :: Formula}
   deriving (Eq, Show, Generic)
 
 data Spreadsheet = SS { _sheet :: Gr Cell Int
@@ -53,16 +52,19 @@ All allowed states of a Formula:
 
            pattern                     |                                            meaning
 ---------------------------------------|--------------------------------------------------------------------------------------------------------
-Formula _ (Left NoParse)         Nothing | the formula could not be parsed
-Formula _ (Left CycleRefError)   Nothing | parse was successful, but there is a reference cycle
-Formula _ (Left NoCache)         Just _  | parse was successful, references are valid, but the formula is not evaluated yet
-Formula _ (Left ListTypeError)   Just _  | the formula cannot be evaluated, because there is at least one inhomogenous reference list
-Formula _ (Left MissingDepError) Just _  | the formula cannot be evaluated, because a dependency is not cached
-Formula _ (Left GHCIError)       Just _  | the formula cannot be evaluated for other reasons (e.g. syntax error, compile error, runtime exception)
-Formula _ (Left TimeoutError)    Just _  | the evaluation timed out, caused most likely by an infinite loop
-Formula _ (Right cell')          Just _  | the evaluation was successful, the result is cell'
+Formula _ (Left FNoParse)         Nothing | the formula could not be parsed
+Formula _ (Left FCycleRefError)   Nothing | parse was successful, but there is a reference cycle
+Formula _ (Left FNoCache)         Just _  | parse was successful, references are valid, but the formula is not evaluated yet
+Formula _ (Left FListTypeError)   Just _  | the formula cannot be evaluated, because there is at least one inhomogenous reference list
+Formula _ (Left FMissingDepError) Just _  | the formula cannot be evaluated, because a dependency is not cached
+Formula _ (Left FGHCIError)       Just _  | the formula cannot be evaluated for other reasons (e.g. syntax error, compile error, runtime exception)
+Formula _ (Left FTimeoutError)    Just _  | the evaluation timed out, caused most likely by an infinite loop
+Formula _ (Right cell')           Just _  | the evaluation was successful, the result is cell'
 ------------------------------------------------------------------------------------------------------------------------------------------------
 -}
+
+makeLenses ''Formula
+makeLenses ''Cell
 
 makeLenses ''Spreadsheet
 overSH ss f = over sheet f ss
