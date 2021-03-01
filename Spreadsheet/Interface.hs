@@ -1,5 +1,6 @@
 {-# LANGUAGE ViewPatterns #-}
 
+-- this file is a complete mess 
 module Spreadsheet.Interface
   (
   emptySpreadsheet,
@@ -11,7 +12,7 @@ module Spreadsheet.Interface
 import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.PatriciaTree
 import Data.Graph.Inductive.Query
-import Data.Maybe (isNothing)
+import Data.Maybe (fromJust, isNothing)
 import Data.Ratio.Rounding
 import Lens.Micro.Platform hiding ((&))
 
@@ -32,9 +33,7 @@ setCellState id' str' ss'
     legalSet :: CellID -> Cell -> Gr Cell Int -> Gr Cell Int
     legalSet id (Val (Str "")) sh
       | null oldRefs = delNode id sh
-      | otherwise = case match id sh of
-                      (Just (p, _, l, s), cg) -> (p, id, Val (Str ""), s) & cg
-                      (Nothing,            _) -> error "node does not exist!"
+      | otherwise = lookupNodeThen id (changeNodeLab $ Val $ Str "") (error "node does not exist!") sh
     legalSet _ _ _ = ssN^.sheet
     oldRefs = pre (ss'^.sheet) id'
     ssB = overSH ss' $ delEdges (zip oldRefs $ repeat id')
@@ -42,16 +41,12 @@ setCellState id' str' ss'
              (Just (p, _, l, s), cg) -> set sheet ((p, id', cell', s) & cg) ssB
              (Nothing,            _) -> overSH ssB $ insNode (id', cell')
     ssN' = overSH ssB' (\sh -> foldr go sh newRefs)
-    go r sh = case match r sh of
-                (Just _,_) -> sh
-                (Nothing,_) -> insNode (r, Val (Str "")) sh
+    go r sh = lookupNodeThen r (const sh) (const $ insNode (r, Val (Str "")) sh) sh
     ssN = overSH ssN' $ insEdges (zip3 newRefs (repeat id') $ repeat 1)
     newRefs = references cell'
     cell' = rep str'
     cyclicErrorSet :: CellID -> Gr Cell Int -> Gr Cell Int
-    cyclicErrorSet id sh =  case match id $ sh of
-                              (Just (p, _, l, s), cg) -> (p, id, cyclicRefError, s) & cg
-                              (Nothing,            _) -> insNode (id,cyclicRefError) sh
+    cyclicErrorSet id sh = lookupNodeThen id (changeNodeLab cyclicRefError) (const $ insNode (id,cyclicRefError) sh) sh
     cyclicRefError = For $ Formula str' (Left FCycleRefError) Nothing 
 
 ------------------------------
@@ -59,7 +54,7 @@ setCellState id' str' ss'
 ------------------------------
 
 cacheCell :: CellID -> Either EvalError String -> Spreadsheet -> Spreadsheet
-cacheCell = undefined
+cacheCell id result ss = undefined
 
 getSelected :: Spreadsheet -> Maybe CellID
 getSelected ss = ss^.selected
@@ -114,3 +109,17 @@ getCellCode id ss = case lab (ss^.sheet) id of
 showCell' :: Cell' -> String
 showCell' (Str str) = str
 showCell' (Number num) = show num
+
+-- useful helper functions
+lookupNodeThen :: DynGraph gr => Node
+               -> (Decomp gr a b -> gr a b)
+               -> (Decomp gr a b -> gr a b)
+               ->  gr a b -> gr a b
+lookupNodeThen node ifFound ifNot gr = case match node gr of
+  dc@(Just c, _) -> ifFound dc
+  dc@_           -> ifNot dc
+
+-- to call in lookupNodeThen' first case
+changeNodeLab :: DynGraph gr => a -> Decomp gr a b -> gr a b
+changeNodeLab lab (Just c, cg) = over _3 (const lab) c & cg
+                           
