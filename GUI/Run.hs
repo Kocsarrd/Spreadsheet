@@ -1,11 +1,13 @@
 -- this file is a complete mess 
 module GUI.Run where
 
+import Control.Concurrent
 import Control.Monad
 import Data.IORef
 import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.Events
 import Language.Haskell.Ghcid
+import System.Timeout
 
 import Persistence
 import Spreadsheet.CodeGeneration
@@ -25,11 +27,13 @@ runGUI ssR = do
   buffer <- textViewGetBuffer log
 
   ghci <- initGhci buffer
+  mvar <- newEmptyMVar
+  forkIO $ timeoutControlThread ghci mvar
   
-  (table, entryKeys) <- getTable ssR buffer ghci
+  (table, entryKeys) <- getTable ssR buffer ghci mvar
   let vad = (buffer, entryKeys)
   menu <- getMenubar ssR vad
-  editor <- getEditor ssR vad ghci
+  editor <- getEditor ssR vad ghci mvar
   boxPackStart vbox menu PackNatural 0
   boxPackStart vbox editor PackNatural 0
   boxPackStart vbox table PackGrow 0
@@ -45,26 +49,36 @@ runGUI ssR = do
 -- ghci related functions, will be moved
 ----------------------------------------
 
-evaluate :: IORef Spreadsheet -> CellID -> Ghci -> TextBuffer -> IO ()
-evaluate ssR id ghci log = do
+evaluate :: IORef Spreadsheet -> CellID -> Ghci -> MVar () -> TextBuffer -> IO ()
+evaluate ssR id ghci mvar log = do
   ss <- readIORef ssR
   case generateCode ss id of
     Left GenMissingDep -> textBufferSetText log "can't evaluate: missing dependencies"
     Left GenListType -> textBufferSetText log "can't evaluate: list type error"
-    Right (code,ids) -> (show <$> exec ghci code) >>= (\s -> textBufferSetText log (s ++ show id))
-
+    Right (code,ids) -> do
+      unless (code == "()") $ do
+        putStrLn $ code ++":)"
+        result <- (timeout 2000000 $ exec ghci code)
+        putStrLn $ show result
+        case result of
+          Nothing -> putMVar mvar () >> (modifyIORef' ssR $ \ss' -> foldr (\i s -> cacheCell i (Left ETimeoutError) s) ss' ids)
+          Just yeah -> modifyIORef' ssR $ \ss' -> foldr (\i s -> cacheCell i (Right "cső") s) ss' ids
+      
 initGhci :: TextBuffer -> IO Ghci
 initGhci log = fst <$> startGhci "ghci" (Just ".") (\_ _ -> textBufferSetText log "Started GHCi session")
-  
+
+timeoutControlThread :: Ghci -> MVar () -> IO ()
+timeoutControlThread ghci mvar = forever $ takeMVar mvar >> interrupt ghci >> putStrLn "interrupted ghci"
+
 ---------------------------------------
 -- one line editor on top of the window
 ---------------------------------------
 
-getEditor :: IORef Spreadsheet -> ViewUpdateData -> Ghci -> IO Entry
-getEditor ssR vad ghci = do
+getEditor :: IORef Spreadsheet -> ViewUpdateData -> Ghci -> MVar () -> IO Entry
+getEditor ssR vad ghci mvar = do
   editor <- entryNew
   onFocusIn editor $ editorGetsFocus editor ssR
-  onFocusOut editor $ editorLosesFocus editor ssR vad ghci
+  onFocusOut editor $ editorLosesFocus editor ssR vad ghci mvar
   return editor
 
 editorGetsFocus :: Entry -> IORef Spreadsheet -> Event -> IO Bool
@@ -75,8 +89,8 @@ editorGetsFocus editor ssR e = do
     Just key -> entrySetText editor (getCellCode key ss)
   return False
   
-editorLosesFocus :: Entry -> IORef Spreadsheet -> ViewUpdateData -> Ghci -> Event -> IO Bool
-editorLosesFocus editor ssR vad@(log,_) ghci e = do
+editorLosesFocus :: Entry -> IORef Spreadsheet -> ViewUpdateData -> Ghci -> MVar () -> Event -> IO Bool
+editorLosesFocus editor ssR vad@(log,_) ghci mvar _ = do
   ss <- readIORef ssR
   newText <- entryGetText editor
   case getSelected ss of
@@ -87,7 +101,7 @@ editorLosesFocus editor ssR vad@(log,_) ghci e = do
   --test line
   case getSelected ss of
     Nothing -> pure ()
-    Just key -> evaluate ssR key ghci log
+    Just key -> evaluate ssR key ghci mvar log 
   return False
 
 ------------------------------------
@@ -141,8 +155,8 @@ getMenubar ssR vad = do
 -- table for representing the spreadsheet
 -----------------------------------------
 
-getTable :: IORef Spreadsheet -> TextBuffer -> Ghci -> IO (Table, [(Entry, (Int, Int))])
-getTable spreadsheet log ghci = do
+getTable :: IORef Spreadsheet -> TextBuffer -> Ghci -> MVar () -> IO (Table, [(Entry, (Int, Int))])
+getTable spreadsheet log ghci mvar = do
   table <- tableNew (sizeY+2) (sizeX+1) True
   forM_ [0..sizeX] $ \n -> do
     label <- labelNew $ Just ""
@@ -161,7 +175,7 @@ getTable spreadsheet log ghci = do
       return (entry, (m,n))
   forM_ entryKeys $ \(entry, mn) -> do
     onFocusIn entry $ cellGetsFocus entry mn spreadsheet 
-    onFocusOut entry $ cellLosesFocus entry mn spreadsheet (log, entryKeys) ghci
+    onFocusOut entry $ cellLosesFocus entry mn spreadsheet (log, entryKeys) ghci mvar
   return (table, entryKeys)
 
 
@@ -173,15 +187,15 @@ cellGetsFocus entry key ssR _ = do
   putStrLn $ "on get: " ++ show ss
   return False
 
-cellLosesFocus :: Entry -> (Int, Int) -> IORef Spreadsheet -> ViewUpdateData -> Ghci -> Event -> IO Bool
-cellLosesFocus entry key ssR vad@(log,_) ghci  _ = do
+cellLosesFocus :: Entry -> (Int, Int) -> IORef Spreadsheet -> ViewUpdateData -> Ghci -> MVar () -> Event -> IO Bool
+cellLosesFocus entry key ssR vad@(log,_) ghci mvar  _ = do
   spreadsheet <- readIORef ssR
   entryText <- entryGetText entry
   unless (entryText == getCellText (fromEnum key) spreadsheet) $
     modifyIORef' ssR $ setCellState (fromEnum key) entryText
   updateView ssR vad
   --test line
-  evaluate ssR (fromEnum key) ghci log
+  evaluate ssR (fromEnum key) ghci mvar log
   return False
 
 

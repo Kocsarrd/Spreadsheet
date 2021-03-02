@@ -4,6 +4,7 @@ module Spreadsheet.Interface
   (
   emptySpreadsheet,
   getCellText, getCellCode, setCellState,
+  cacheCell,
   getSelected, setSelected,
   getLogMessage
   ) where
@@ -51,8 +52,19 @@ setCellState id' str' ss'
 -- for caching evaluated cells
 ------------------------------
 
+-- if result is error, modify formula cache to corresponding error
+-- if not, parse the value
+-- this will contain a bug (if result string starts with '=') (rep call should be replaced with a repCell' or smth)
 cacheCell :: CellID -> Either EvalError String -> Spreadsheet -> Spreadsheet
-cacheCell id result ss = undefined
+cacheCell id result ss = overSH ss $ lookupNodeThen id
+                               (changeNodeLabBy $ over (cellF.cache) $ const $ readResult result)
+                               (error "node does not exist")
+  where
+    readResult (Left err) = Left $ convErr err
+    readResult (Right ok) = Right $ fromJust $ rep ok ^? cellV 
+    convErr EGhciError = FGhciError
+    convErr ETimeoutError = FTimeoutError
+
 
 getSelected :: Spreadsheet -> Maybe CellID
 getSelected ss = ss^.selected
@@ -118,6 +130,10 @@ lookupNodeThen node ifFound ifNot gr = case match node gr of
   dc@_           -> ifNot dc
 
 -- to call in lookupNodeThen' first case
+changeNodeLabBy :: DynGraph gr => (a -> a) -> Decomp gr a b -> gr a b
+changeNodeLabBy f (Just c, cg) = over _3 f c & cg
+
 changeNodeLab :: DynGraph gr => a -> Decomp gr a b -> gr a b
-changeNodeLab lab (Just c, cg) = over _3 (const lab) c & cg
-                           
+changeNodeLab = changeNodeLabBy . const 
+
+
