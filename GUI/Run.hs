@@ -61,15 +61,23 @@ evaluate ssR id ghci mvar log = do
         result <- (timeout 2000000 $ exec ghci code)
         putStrLn $ show result
         case result of
-          Nothing -> putMVar mvar () >> (modifyIORef' ssR $ \ss' -> foldr (\i s -> cacheCell i (Left ETimeoutError) s) ss' ids)
+          Nothing -> do
+            putMVar mvar () 
+            modifyIORef' ssR $ \ss' -> foldr (\i s -> cacheCell i (Left ETimeoutError) s) ss' ids
           Just yeah -> modifyIORef' ssR $ \ss' -> foldr (\i s -> cacheCell i (Right "cső") s) ss' ids
-      
+
+  exec ghci "1+1" >>= putStrLn.show
+    
 initGhci :: TextBuffer -> IO Ghci
 initGhci log = fst <$> startGhci "ghci" (Just ".") (\_ _ -> textBufferSetText log "Started GHCi session")
 
+{-
 timeoutControlThread :: Ghci -> MVar () -> IO ()
-timeoutControlThread ghci mvar = forever $ takeMVar mvar >> interrupt ghci >> putStrLn "interrupted ghci"
-
+timeoutControlThread ghci mvar = forever $ do
+  takeMVar mvar
+  interrupt ghci
+  putStrLn "interrupted ghci"
+-}
 ---------------------------------------
 -- one line editor on top of the window
 ---------------------------------------
