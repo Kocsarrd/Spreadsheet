@@ -1,10 +1,6 @@
 module Main where
 
-import Control.Monad.Reader (runReaderT)
-import GUI.Run2
+import GUI.RunApp
 
 main :: IO ()
-main = do
-  env <- createEnv
-  runReaderT runApp env
-  
+main = appMain  
