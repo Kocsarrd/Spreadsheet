@@ -9,9 +9,6 @@ import Data.Maybe (fromJust)
 import Lens.Micro ((^.))
 import Spreadsheet.Types
 
-data GenError = GenListType | GenMissingDep
-  deriving (Eq,Show)
-
 -- generate code from given data
 -- list type check is not yet handled
 -- if id has parse error, GenMissingDep is not informative
@@ -25,7 +22,6 @@ codeG (xs,ys) = (foldr go "" (xs ++ ys) ++ final , map snd ys)
   where
     go (cell,id) acc = ("let " ++ 'v' : show id ++ " = " ++ cellG cell ++ " in ") ++ acc
     final = '(' : (intercalate "," $ map (('v':) . show . snd) ys) ++ ")"
-
   
 -- generate code for a single cell
 cellG :: Cell -> String

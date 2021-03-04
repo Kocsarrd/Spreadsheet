@@ -16,6 +16,8 @@ import Data.Maybe (fromJust, isNothing)
 import Data.Ratio.Rounding
 import Lens.Micro.Platform hiding ((&))
 
+import System.IO.Unsafe
+
 import Spreadsheet.Types
 import Spreadsheet.Parser
 

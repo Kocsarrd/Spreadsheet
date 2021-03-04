@@ -12,6 +12,10 @@ import Lens.Micro.Platform
 
 type CellID = Int
 
+-- errors of code generation
+data GenError = GenListType | GenMissingDep
+  deriving (Eq,Show)
+
 -- evaluation error from control to model
 data EvalError = EGhciError | ETimeoutError
   deriving (Eq, Show)

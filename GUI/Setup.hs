@@ -2,8 +2,10 @@ module GUI.Setup (setupGui) where
 
 import Control.Monad
 import Control.Monad.Reader
+import qualified Data.Function as DF (on) 
 import Data.Functor.Identity
 import Data.IORef
+import Data.List (groupBy)
 import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.Events
 import Language.Haskell.Ghcid
@@ -14,6 +16,7 @@ import Persistence
 import Spreadsheet.CodeGeneration
 import Spreadsheet.Types
 import Spreadsheet.Interface
+import Spreadsheet.Parser
 
 -- connects the GUI with the logic
 setupGui :: ReaderT Env IO ()
@@ -45,6 +48,7 @@ editorGetsFocus _ = do
       Just key -> entrySetText ed (getCellCode key ss)
   pure False
 
+-- known bug: evaluation needs to be called here
 editorLosesFocus :: Event -> ReaderT Env IO Bool
 editorLosesFocus e = do
   ssR <- asks state
@@ -150,7 +154,8 @@ cellLosesFocus entry key _ = do
 -- actions called by handlers
 -----------------------------
 
--- this is incomplete
+-- this is incomplete (timeout)
+-- parser call should be moved to cacheCell in interface
 evalAndSet :: CellID -> ReaderT Env IO ()
 evalAndSet id = do
   ssR <- asks state
@@ -161,8 +166,14 @@ evalAndSet id = do
     case generateCode ss id of
       Left GenMissingDep -> textBufferSetText l "can't evaluate: missing dependencies"
       Left GenListType -> textBufferSetText l "can't evaluate: list type error"
-      Right (code,ids) -> (show <$> exec g code) >>=
-                          (\s -> textBufferSetText l (s ++ show id))
+      Right (code,ids) -> unless (code == "()") $ do
+        putStrLn code -- !!
+        result <- exec g code
+        case result of
+          [res] -> forM_ (zip ids (getResult res)) (\(i,c) -> modifyIORef' ssR $ cacheCell i $ Right c)
+          _    -> textBufferSetText l (show result) >>
+                  modifyIORef' ssR (cacheCell id $ Left EGhciError)
+        textBufferSetText l (show result) 
   
 updateView :: ReaderT Env IO ()
 updateView = do
@@ -173,7 +184,7 @@ updateView = do
     ss <- readIORef ssR
     forM_ ek $ \(e,k) ->
       entrySetText e $ getCellText (fromEnum k) ss
-    textBufferSetText l $ getLogMessage ss
+    --textBufferSetText l $ getLogMessage ss
 
 --
 up :: Reader Env a -> ReaderT Env IO a

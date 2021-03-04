@@ -1,4 +1,4 @@
-module Spreadsheet.Parser (rep) where
+module Spreadsheet.Parser (rep, getResult) where
 
 import Control.Applicative (liftA2)
 import Data.Char
@@ -60,3 +60,14 @@ refsP = fmap Refs $ char '§' *> (try listRef <|> singleRef) <* char '§'
     cellNum :: Parser Int
     cellNum = read <$> many1 digit
     letterToNum c = fromEnum c - 65
+
+-- converts result of evaluation to list of results
+getResult :: String -> [String]
+getResult str = case parse resultP "" str of
+                  Left _ -> error "result parser error"
+                  Right res -> res
+
+resultP :: Parser [String]
+resultP = between (char '(') (char ')') p <|> (pure <$> many anyChar)
+  where
+    p = many (noneOf "),") `sepBy` char ','
