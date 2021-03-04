@@ -34,7 +34,7 @@ cacheG (Val (Number num)) = trimmed
     trimmed = if decimal == "0" then integer else numS
     [integer,decimal] = splitOn "." numS
     numS = show num
-cacheG (For (Formula _ (Right val) _)) = cellG $ Val val
+cacheG (For (Formula _ (Right val) _)) = cacheG $ Val val
 cacheG _ = error "cacheG: cell cache was empty"
 
 -- generate code for cells that depend on the changed cell
@@ -44,7 +44,8 @@ cellG (For (Formula _ _ (Just pieces))) = foldr go "" pieces
     go (Code code) acc = code ++ acc
     go (Refs [id]) acc = 'v' : show id ++ acc
     go (Refs ids)  acc = '[' : (intercalate "," $ map (('v':) . show) ids) ++ "]"
-cellG _ = error "cellG: cell was not a formula or was not ready"
+cellG (For _) = error "cellG: cell was not ready"
+cellG _ = error "cellG: cell was not a formula"
 
 -- collect all cells that depend on or are dependencies of a given cell
 -- a cell only depends on cells that precede it in the resulting list
