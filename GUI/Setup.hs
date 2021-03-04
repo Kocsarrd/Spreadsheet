@@ -133,8 +133,8 @@ cellGetsFocus key _ = do
   lift $ do
     modifyIORef' ssR $ setSelected (fromEnum key)
     --debug:
-    ss <- readIORef ssR
-    putStrLn $ "on get: " ++ show ss
+    --ss <- readIORef ssR
+    --putStrLn $ "on get: " ++ show ss
     pure False
 
 cellLosesFocus :: Entry -> (Int,Int) -> Event -> ReaderT Env IO Bool
