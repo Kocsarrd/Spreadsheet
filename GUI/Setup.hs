@@ -39,10 +39,9 @@ setupEditor = do
 
 editorGetsFocus :: Event -> ReaderT Env IO Bool
 editorGetsFocus _ = do
-  ssR <- asks state
+  ss <- asks state >>= liftIO . readIORef
   ed <- editor <$> asks gui
   lift $ do
-    ss <- readIORef ssR
     case getSelected ss of
       Nothing -> entrySetText ed ""
       Just key -> entrySetText ed (getCellCode key ss)
@@ -70,9 +69,9 @@ editorLosesFocus e = do
 setupMenubar :: ReaderT Env IO ()
 setupMenubar = do
   (Menubar save load) <- menu <$> asks gui
-  e' <- ask
-  lift $ onClicked save $ runReaderT saveAction (state e')
-  void $ lift $ onClicked load $ runReaderT loadAction e'
+  env <- ask
+  lift $ onClicked save $ runReaderT saveAction (state env)
+  void $ lift $ onClicked load $ runReaderT loadAction env
 
 getFileChooserDialog :: FileChooserAction -> IO FileChooserDialog
 getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ " sheet") Nothing act
@@ -101,7 +100,7 @@ loadAction = do
 
 saveAction :: ReaderT (IORef Spreadsheet) IO ()
 saveAction = do
-  ssR <- ask
+  ss <- ask >>= liftIO . readIORef
   lift $ do
     dialog <- getFileChooserDialog FileChooserActionSave
     fileChooserSetDoOverwriteConfirmation dialog True
@@ -111,7 +110,7 @@ saveAction = do
       ResponseAccept -> do fname <- fileChooserGetFilename dialog
                            case fname of
                              Nothing -> pure ()
-                             Just file -> readIORef ssR >>= saveSheet (file ++ ".fsandor")
+                             Just file -> saveSheet (file ++ ".fsandor") ss
       _ -> pure ()
     widgetDestroy dialog
 
@@ -155,7 +154,7 @@ cellLosesFocus entry key _ = do
 -----------------------------
 
 -- this is incomplete (timeout)
--- parser call should be moved to cacheCell in interface
+-- parser call should be moved to cacheCell in Interface
 evalAndSet :: CellID -> ReaderT Env IO ()
 evalAndSet id = do
   ssR <- asks state
@@ -178,10 +177,9 @@ evalAndSet id = do
 updateView :: ReaderT Env IO ()
 updateView = do
   ek <- entryKeys <$> asks gui
-  ssR <- asks state
+  ss <- asks state >>= liftIO . readIORef
   l <- log <$> asks gui
   lift $ do
-    ss <- readIORef ssR
     forM_ ek $ \(e,k) ->
       entrySetText e $ getCellText (fromEnum k) ss
     --textBufferSetText l $ getLogMessage ss

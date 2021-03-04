@@ -28,5 +28,3 @@ data Env = Env { ghci  :: Ghci
                , gui   :: Gui
                , state :: IORef Spreadsheet
                } deriving Eq
-
-
