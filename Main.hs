@@ -1,11 +1,10 @@
 module Main where
 
-import Data.IORef
-import GUI.Run
-import Persistence
-import Spreadsheet.Interface
+import Control.Monad.Reader (runReaderT)
+import GUI.Run2
 
 main :: IO ()
 main = do
-  spreadsheet <- newIORef emptySpreadsheet
-  runGUI spreadsheet
+  env <- createEnv
+  runReaderT runApp env
+  
