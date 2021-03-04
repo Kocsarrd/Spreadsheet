@@ -27,7 +27,7 @@ data Menubar = Menubar { saveButton :: Button
                        } deriving Eq
 
 data Gui = Gui { mainWindow :: Window
-               , log        :: TextView
+               , log        :: TextBuffer
                , table      :: Table
                , entryKeys  :: [(Entry,(Int,Int))]
                , editor     :: Entry
@@ -55,6 +55,7 @@ createGui = do
           ]
   set logWindow [ containerChild := log
                 , scrolledWindowHscrollbarPolicy := PolicyNever]
+  buffer <- textViewGetBuffer log
   table <- tableNew (sizeY+2) (sizeX+1) True
   forM_ [0..sizeX] $ \n -> do
     label <- labelNew $ Just ""
@@ -81,7 +82,7 @@ createGui = do
   boxPackStart vbox editor PackNatural 0
   boxPackStart vbox table PackGrow 0
   boxPackStart vbox logWindow PackGrow 0
-  pure $ Gui mainWindow log table entryKeys editor (Menubar saveButton loadButton)
+  pure $ Gui mainWindow buffer table entryKeys editor (Menubar saveButton loadButton)
 
 -- initializes global state
 createEnv :: IO Env
@@ -105,27 +106,27 @@ runApp = do
 setupGui :: ReaderT Env IO ()
 setupGui = do
   setupEditor
+  setupMenubar
+  setupTable
 
 setupEditor :: ReaderT Env IO ()
 setupEditor = do
   ed <- (editor <$> asks gui)
-  liftM2 onFocusIn (editor <$> asks gui) (up editorGetsFocus)
-  e' <- ask
-  lift $ do
-    onFocusOut ed (\e -> runReaderT (editorLosesFocus e) e')
-    pure undefined
+  env <- ask
+  lift $ onFocusOut ed (\e -> runReaderT (editorLosesFocus e) env)
+  lift $ onFocusIn ed (\e -> runReaderT (editorGetsFocus e) env)
   pure ()
 
-editorGetsFocus :: Reader Env (Event -> IO Bool)
-editorGetsFocus = do
+editorGetsFocus :: Event -> ReaderT Env IO Bool
+editorGetsFocus _ = do
   ssR <- asks state
   ed <- editor <$> asks gui
-  pure $ \_ -> do
+  lift $ do
     ss <- readIORef ssR
     case getSelected ss of
       Nothing -> entrySetText ed ""
       Just key -> entrySetText ed (getCellCode key ss)
-    pure False
+  pure False
 
 editorLosesFocus :: Event -> ReaderT Env IO Bool
 editorLosesFocus e = do
@@ -141,8 +142,110 @@ editorLosesFocus e = do
   updateView
   pure False
 
-updateView :: ReaderT Env IO ()
-updateView = undefined
+setupMenubar :: ReaderT Env IO ()
+setupMenubar = do
+  (Menubar save load) <- menu <$> asks gui
+  e' <- ask
+  lift $ onClicked save $ runReaderT saveAction (state e')
+  void $ lift $ onClicked load $ runReaderT loadAction e'
+
+getFileChooserDialog :: FileChooserAction -> IO FileChooserDialog
+getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ " sheet") Nothing act
+                                   [("Cancel", ResponseCancel), (title, ResponseAccept)]
+  where
+    title = case act of
+              FileChooserActionOpen -> "Load"
+              FileChooserActionSave -> "Save"
+              _                     -> "Fazekas Sándor"
+
+loadAction :: ReaderT Env IO ()
+loadAction = do
+  ssR  <- asks state
+  lift $ do
+    dialog <- getFileChooserDialog FileChooserActionOpen
+    widgetShow dialog
+    response <- dialogRun dialog
+    case response of
+      ResponseAccept -> do fname <- fileChooserGetFilename dialog
+                           case fname of
+                             Nothing -> pure ()
+                             Just file -> loadSheet file >>= either putStrLn (writeIORef ssR)      
+      _ -> pure ()
+    widgetDestroy dialog
+  updateView
+
+saveAction :: ReaderT (IORef Spreadsheet) IO ()
+saveAction = do
+  ssR <- ask
+  lift $ do
+    dialog <- getFileChooserDialog FileChooserActionSave
+    fileChooserSetDoOverwriteConfirmation dialog True
+    widgetShow dialog
+    response <- dialogRun dialog
+    case response of
+      ResponseAccept -> do fname <- fileChooserGetFilename dialog
+                           case fname of
+                             Nothing -> pure ()
+                             Just file -> readIORef ssR >>= saveSheet (file ++ ".fsandor")
+      _ -> pure ()
+    widgetDestroy dialog
+
+setupTable :: ReaderT Env IO ()
+setupTable = do
+  ek <- entryKeys <$> asks gui
+  env <- ask
+  lift $ forM_ ek $ \(entry,mn) -> do
+    onFocusIn entry $ (\e -> runReaderT (cellGetsFocus mn e) (state env))
+    onFocusOut entry $ (\e -> runReaderT (cellLosesFocus entry mn e) env)
+
+cellGetsFocus :: (Int, Int) -> Event -> ReaderT (IORef Spreadsheet) IO Bool
+cellGetsFocus key _ = do
+  ssR <- ask
+  lift $ do
+    modifyIORef' ssR $ setSelected (fromEnum key)
+    --debug:
+    ss <- readIORef ssR
+    putStrLn $ "on get: " ++ show ss
+    pure False
+
+cellLosesFocus :: Entry -> (Int,Int) -> Event -> ReaderT Env IO Bool
+cellLosesFocus entry key _ = do
+  l <- log <$> asks gui
+  ssR <- asks state
+  lift $ do
+    ss <- readIORef ssR
+    entryText <- entryGetText entry
+    unless (entryText == getCellText (fromEnum key) ss) $
+      modifyIORef' ssR $ setCellState (fromEnum key) entryText
+  evalAndSet (fromEnum key)
+  updateView
+  pure False
+
+
+evalAndSet :: CellID -> ReaderT Env IO ()
+evalAndSet id = do
+  ssR <- asks state
+  g <- asks ghci
+  l <- log <$> asks gui
+  lift $ do
+    ss <- readIORef ssR
+    case generateCode ss id of
+      Left GenMissingDep -> textBufferSetText l "can't evaluate: missing dependencies"
+      Left GenListType -> textBufferSetText l "can't evaluate: list type error"
+      Right (code,ids) -> (show <$> exec g code) >>=
+                          (\s -> textBufferSetText l (s ++ show id))
   
+
+updateView :: ReaderT Env IO ()
+updateView = do
+  ek <- entryKeys <$> asks gui
+  ssR <- asks state
+  l <- log <$> asks gui
+  lift $ do
+    ss <- readIORef ssR
+    forM_ ek $ \(e,k) ->
+      entrySetText e $ getCellText (fromEnum k) ss
+    textBufferSetText l $ getLogMessage ss
+
 up :: Reader Env a -> ReaderT Env IO a
 up = mapReaderT (pure . runIdentity)
