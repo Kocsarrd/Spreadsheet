@@ -58,4 +58,4 @@ createGui = do
   boxPackStart vbox editor PackNatural 0
   boxPackStart vbox table PackGrow 0
   boxPackStart vbox logWindow PackGrow 0
-  pure $ Gui mainWindow buffer table entryKeys editor (Menubar saveButton loadButton)
+  pure $ Gui mainWindow logWindow buffer table entryKeys editor (Menubar saveButton loadButton)

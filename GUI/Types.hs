@@ -1,7 +1,7 @@
 module GUI.Types where
 
 import Data.IORef (IORef)
-import Graphics.UI.Gtk (Button, Entry, Table, TextBuffer, Window)
+import Graphics.UI.Gtk (Button, Entry, Table, TextBuffer, ScrolledWindow, Window)
 import Language.Haskell.Ghcid (Ghci)
 
 import Spreadsheet.Types (Spreadsheet)
@@ -17,6 +17,7 @@ data Menubar = Menubar { saveButton :: Button
                        } deriving Eq
 
 data Gui = Gui { mainWindow :: Window
+               , logWindow  :: ScrolledWindow
                , log        :: TextBuffer
                , table      :: Table
                , entryKeys  :: [(Entry,(Int,Int))]

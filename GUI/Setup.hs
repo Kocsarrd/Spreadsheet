@@ -163,16 +163,17 @@ evalAndSet id = do
   lift $ do
     ss <- readIORef ssR
     case generateCode ss id of
-      Left GenMissingDep -> textBufferSetText l "can't evaluate: missing dependencies"
-      Left GenListType -> textBufferSetText l "can't evaluate: list type error"
+      Left GenMissingDep -> textBufferInsertAtCursor l "can't evaluate: missing dependencies\n"
+      Left GenListType -> textBufferInsertAtCursor l "can't evaluate: list type error\n"
       Right (code,ids) -> unless (code == "()") $ do
         putStrLn code -- !!
         result <- exec g code
         case result of
           [res] -> forM_ (zip ids (getResult res)) (\(i,c) -> modifyIORef' ssR $ cacheCell i $ Right c)
-          _    -> textBufferSetText l (show result) >>
-                  modifyIORef' ssR (cacheCell id $ Left EGhciError)
-        textBufferSetText l (show result) 
+          _    -> modifyIORef' ssR (cacheCell id $ Left EGhciError) >>
+                  textBufferInsertAtCursor l (show result ++ "\n") 
+
+
   
 updateView :: ReaderT Env IO ()
 updateView = do
@@ -182,8 +183,8 @@ updateView = do
   lift $ do
     forM_ ek $ \(e,k) ->
       entrySetText e $ getCellText (fromEnum k) ss
-    --textBufferSetText l $ getLogMessage ss
+    textBufferInsertAtCursor l $ getLogMessage ss ++ "\n"
 
---
+-- generalize Reader action to ReaderT action
 up :: Reader Env a -> ReaderT Env IO a
 up = mapReaderT (pure . runIdentity)
