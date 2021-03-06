@@ -52,13 +52,13 @@ editorLosesFocus :: Event -> ReaderT Env IO Bool
 editorLosesFocus e = do
   ssR <- asks state
   ed <- editor <$> asks gui
-  lift $ do
-    ss <- readIORef ssR
-    newText <- entryGetText ed
-    case getSelected ss of
-      Nothing -> pure ()
-      Just key -> unless (newText == getCellText key ss) $
-                  modifyIORef' ssR $ setCellState key newText
+  ss <- lift $ readIORef ssR
+  newText <- lift $ entryGetText ed 
+  case getSelected ss of
+    Nothing -> pure ()
+    Just key -> lift (unless (newText == getCellText key ss) $
+                         modifyIORef' ssR $ setCellState key newText) >>
+                evalAndSet key
   updateView
   pure False
 
