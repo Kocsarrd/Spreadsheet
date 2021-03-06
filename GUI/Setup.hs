@@ -47,7 +47,6 @@ editorGetsFocus _ = do
       Just key -> entrySetText ed (getCellCode key ss)
   pure False
 
--- known bug: evaluation needs to be called here
 editorLosesFocus :: Event -> ReaderT Env IO Bool
 editorLosesFocus e = do
   ssR <- asks state
