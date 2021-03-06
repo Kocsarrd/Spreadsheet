@@ -13,6 +13,7 @@ import Language.Haskell.Ghcid
 import Prelude hiding (log)
 
 import GUI.Types
+import Eval.Evaluation
 import Persistence
 import Spreadsheet.CodeGeneration
 import Spreadsheet.Types
@@ -153,22 +154,26 @@ cellLosesFocus entry key _ = do
 -- actions called by handlers
 -----------------------------
 
--- this is incomplete (timeout)
--- parser call should be moved to cacheCell in Interface
+-- most of functionality should be moved to Eval
 evalAndSet :: CellID -> ReaderT Env IO ()
 evalAndSet id = do
   ssR <- askState
   g <- askGhci >>= lift . readMVar
   l <- asksGui log
   ss <- lift $ readIORef ssR
+  eData <- asks evalData
   case generateCode ss id of
     Left GenMissingDep ->  logAppendText "can't evaluate: missing dependencies"
     Left GenListType -> logAppendText "can't evaluate: list type error"
     Right (code,ids) -> unless (code == "()") $ do
       lift $ putStrLn code -- !! debug line
-      result <- lift $ exec g code
+      result <- lift $ execCommand eData code
       case result of
-        [res] -> lift $ forM_ (zip ids (getResult res)) (\(i,c) -> modifyIORef' ssR $ cacheCell i $ Right c)
+        Left _ -> do
+          lift $ modifyIORef' ssR (cacheCell id $ Left ETimeoutError)
+          logAppendText $ show result
+        Right [res] -> lift $ forM_ (zip ids (getResult res))
+                                (\(i,c) -> modifyIORef' ssR $ cacheCell i $ Right c)
         _    -> do
           lift $ modifyIORef' ssR (cacheCell id $ Left EGhciError)
           logAppendText $ show result 

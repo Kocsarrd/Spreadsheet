@@ -28,7 +28,7 @@ data Gui = Gui { mainWindow :: Window
 
 data EvalData = EvalData { eGhci    :: MVar Ghci
                          , eCommand :: MVar String
-                         , eResult :: MVar (Either String String)
+                         , eResult :: MVar (Either String [String])
                          } deriving Eq
 
 data Env = Env { evalData  :: EvalData

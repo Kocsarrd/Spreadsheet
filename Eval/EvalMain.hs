@@ -24,7 +24,7 @@ evalMain (EvalData ghciR commandR resultR) = forever $ do
         Just pid -> do
           childPid <- init <$> readProcess "pgrep" ["-P", show pid] ""
           putMVar resultR $ Left childPid
-    Just result -> putMVar resultR $ Right $ show result
+    Just result -> putMVar resultR $ Right $ result
   -- debug
   putStrLn "Fazekas Sándor"
 

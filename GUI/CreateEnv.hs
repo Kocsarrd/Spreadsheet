@@ -15,7 +15,7 @@ import Spreadsheet.Interface (emptySpreadsheet)
 createEnv :: IO Env
 createEnv = do
   evalData <- createEvalData
-  --forkIO evalThread evalData
+  forkIO $ evalMain evalData
   pure (Env evalData) <*> createGui <*> newIORef emptySpreadsheet
 
 -- initializes variables for evaluation

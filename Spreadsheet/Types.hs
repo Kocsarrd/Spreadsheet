@@ -12,6 +12,8 @@ import Lens.Micro.Platform
 
 type CellID = Int
 
+-- some of the errors might need to be moved
+
 -- errors of code generation
 data GenError = GenListType | GenMissingDep
   deriving (Eq,Show)

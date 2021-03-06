@@ -14,7 +14,6 @@ appMain = do
   env <- createEnv
   runReaderT runApp env
 
--- onDestroy may need to be rewritten, if I want to change ghci sessions
 runApp :: ReaderT Env IO ()
 runApp = do
   setupGui
