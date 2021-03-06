@@ -172,7 +172,7 @@ evalAndSet id = do
           lift $ modifyIORef' ssR (cacheCell id $ Left EGhciError)
           logAppendText $ show result 
 
--- this should support
+-- this should support keeping log smaller than a max length
 logAppendText :: String -> ReaderT Env IO ()
 logAppendText str = do
   l <- asksGui log
