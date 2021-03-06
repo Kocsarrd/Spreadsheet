@@ -193,7 +193,7 @@ updateView :: ReaderT Env IO ()
 updateView = do
   ek <- asksGui entryKeys
   ss <- askState >>= liftIO . readIORef
-  l <- log <$> asks gui
+  l <- asksGui log
   lift $ forM_ ek $ \(e,k) ->
     entrySetText e $ getCellText (fromEnum k) ss
   logAppendText $ getLogMessage ss
@@ -203,7 +203,7 @@ up :: Reader r a -> ReaderT r IO a
 up = mapReaderT (pure . runIdentity)
 
 -- convinience functions to access Env
-asksGui :: (Gui -> a) -> ReaderT Env IO a
+asksGui :: Monad m => (Gui -> a) -> ReaderT Env m a
 asksGui f = f <$> asks gui
 
 askState = asks state
