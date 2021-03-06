@@ -1,5 +1,6 @@
 module GUI.Types where
 
+import Control.Concurrent (MVar)
 import Data.IORef (IORef)
 import Graphics.UI.Gtk (Button, Entry, Table, TextBuffer, ScrolledWindow, Window)
 import Language.Haskell.Ghcid (Ghci)
@@ -25,7 +26,12 @@ data Gui = Gui { mainWindow :: Window
                , menu       :: Menubar
                } deriving Eq
 
-data Env = Env { ghci  :: Ghci
-               , gui   :: Gui
-               , state :: IORef Spreadsheet
+data EvalData = EvalData { eGhci    :: MVar Ghci
+                         , eCommand :: MVar String
+                         , eResult :: MVar (Either String String)
+                         } deriving Eq
+
+data Env = Env { evalData  :: EvalData
+               , gui       :: Gui
+               , state     :: IORef Spreadsheet
                } deriving Eq

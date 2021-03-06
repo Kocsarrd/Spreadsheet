@@ -1,5 +1,6 @@
 module GUI.RunApp (appMain) where
 
+import Control.Concurrent
 import Control.Monad.Reader
 import Graphics.UI.Gtk
 import Language.Haskell.Ghcid
@@ -18,10 +19,12 @@ runApp :: ReaderT Env IO ()
 runApp = do
   setupGui
   mainW <- mainWindow <$> asks gui
-  ghci' <- asks ghci
+  ghci' <- eGhci <$> asks evalData
   lift $ do
     windowMaximize mainW
     widgetShowAll mainW
-    onDestroy mainW $ mainQuit >> stopGhci ghci'
+    onDestroy mainW $ do
+      mainQuit
+      readMVar ghci' >>= stopGhci
     mainGUI
 

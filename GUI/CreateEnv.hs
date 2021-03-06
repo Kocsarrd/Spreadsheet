@@ -1,10 +1,12 @@
 module GUI.CreateEnv (createEnv) where
 
+import Control.Concurrent
 import Control.Monad
 import Data.IORef
 import Graphics.UI.Gtk
 import Language.Haskell.Ghcid
 
+import Eval.EvalMain
 import GUI.Types
 import Spreadsheet.Types
 import Spreadsheet.Interface (emptySpreadsheet)
@@ -12,8 +14,15 @@ import Spreadsheet.Interface (emptySpreadsheet)
 -- initializes global state
 createEnv :: IO Env
 createEnv = do
-  ghci <- fst <$> startGhci "ghci" (Just ".") (\_  -> putStrLn)
-  pure (Env ghci) <*> createGui <*> newIORef emptySpreadsheet
+  evalData <- createEvalData
+  --forkIO evalThread evalData
+  pure (Env evalData) <*> createGui <*> newIORef emptySpreadsheet
+
+-- initializes variables for evaluation
+createEvalData :: IO EvalData
+createEvalData = EvalData <$> (fst <$> startGhci "ghci" (Just ".") (\_  -> putStrLn) >>= newMVar)
+                          <*> newEmptyMVar
+                          <*> newEmptyMVar
 
 -- creates the GUI layout, without adding functionality 
 createGui :: IO Gui

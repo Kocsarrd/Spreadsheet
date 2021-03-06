@@ -1,5 +1,6 @@
 module GUI.Setup (setupGui) where
 
+import Control.Concurrent
 import Control.Monad
 import Control.Monad.Reader
 import qualified Data.Function as DF (on) 
@@ -157,7 +158,7 @@ cellLosesFocus entry key _ = do
 evalAndSet :: CellID -> ReaderT Env IO ()
 evalAndSet id = do
   ssR <- askState
-  g <- askGhci
+  g <- askGhci >>= lift . readMVar
   l <- asksGui log
   ss <- lift $ readIORef ssR
   case generateCode ss id of
@@ -172,7 +173,7 @@ evalAndSet id = do
           lift $ modifyIORef' ssR (cacheCell id $ Left EGhciError)
           logAppendText $ show result 
 
--- this should support keeping log smaller than a max length
+-- this should support keeping the log shorter than a max number of lines
 logAppendText :: String -> ReaderT Env IO ()
 logAppendText str = do
   l <- asksGui log
@@ -207,4 +208,4 @@ asksGui :: Monad m => (Gui -> a) -> ReaderT Env m a
 asksGui f = f <$> asks gui
 
 askState = asks state
-askGhci = asks ghci
+askGhci = eGhci <$> asks evalData
