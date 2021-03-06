@@ -31,7 +31,7 @@ setupGui = do
 
 setupEditor :: ReaderT Env IO ()
 setupEditor = do
-  ed <- (editor <$> asks gui)
+  ed <- asksGui editor
   env <- ask
   lift $ onFocusOut ed (\e -> runReaderT (editorLosesFocus e) env)
   lift $ onFocusIn ed (\e -> runReaderT (editorGetsFocus e) env)
@@ -39,8 +39,8 @@ setupEditor = do
 
 editorGetsFocus :: Event -> ReaderT Env IO Bool
 editorGetsFocus _ = do
-  ss <- asks state >>= liftIO . readIORef
-  ed <- editor <$> asks gui
+  ss <- askState >>= liftIO . readIORef
+  ed <- asksGui editor
   lift $ do
     case getSelected ss of
       Nothing -> entrySetText ed ""
@@ -49,8 +49,8 @@ editorGetsFocus _ = do
 
 editorLosesFocus :: Event -> ReaderT Env IO Bool
 editorLosesFocus e = do
-  ssR <- asks state
-  ed <- editor <$> asks gui
+  ssR <- askState
+  ed <- asksGui editor
   ss <- lift $ readIORef ssR
   newText <- lift $ entryGetText ed 
   case getSelected ss of
@@ -67,7 +67,7 @@ editorLosesFocus e = do
 
 setupMenubar :: ReaderT Env IO ()
 setupMenubar = do
-  (Menubar save load) <- menu <$> asks gui
+  (Menubar save load) <- asksGui menu
   env <- ask
   lift $ onClicked save $ runReaderT saveAction (state env)
   void $ lift $ onClicked load $ runReaderT loadAction env
@@ -83,7 +83,7 @@ getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ " sheet") Noth
 
 loadAction :: ReaderT Env IO ()
 loadAction = do
-  ssR  <- asks state
+  ssR  <- askState
   lift $ do
     dialog <- getFileChooserDialog FileChooserActionOpen
     widgetShow dialog
@@ -119,7 +119,7 @@ saveAction = do
 
 setupTable :: ReaderT Env IO ()
 setupTable = do
-  ek <- entryKeys <$> asks gui
+  ek <- asksGui entryKeys
   env <- ask
   lift $ forM_ ek $ \(entry,mn) -> do
     onFocusIn entry $ (\e -> runReaderT (cellGetsFocus mn e) (state env))
@@ -137,8 +137,8 @@ cellGetsFocus key _ = do
 
 cellLosesFocus :: Entry -> (Int,Int) -> Event -> ReaderT Env IO Bool
 cellLosesFocus entry key _ = do
-  l <- log <$> asks gui
-  ssR <- asks state
+  l <- asksGui log
+  ssR <- askState
   lift $ do
     ss <- readIORef ssR
     entryText <- entryGetText entry
@@ -156,9 +156,9 @@ cellLosesFocus entry key _ = do
 -- parser call should be moved to cacheCell in Interface
 evalAndSet :: CellID -> ReaderT Env IO ()
 evalAndSet id = do
-  ssR <- asks state
-  g <- asks ghci
-  l <- log <$> asks gui
+  ssR <- askState
+  g <- askGhci
+  l <- asksGui log
   ss <- lift $ readIORef ssR
   case generateCode ss id of
     Left GenMissingDep ->  logAppendText "can't evaluate: missing dependencies"
@@ -172,9 +172,10 @@ evalAndSet id = do
           lift $ modifyIORef' ssR (cacheCell id $ Left EGhciError)
           logAppendText $ show result 
 
+-- this should support
 logAppendText :: String -> ReaderT Env IO ()
 logAppendText str = do
-  l <- log <$> asks gui
+  l <- asksGui log
   sw <- logWindow <$> asks gui
   lift $ do
     textBufferInsertAtCursor l (str ++ "\n")
@@ -187,19 +188,23 @@ logAppendText str = do
         u <- adjustmentGetUpper adj
         p <- adjustmentGetPageSize adj
         adjustmentSetValue adj (u-p)
-    
-    
-  
-  
+      
 updateView :: ReaderT Env IO ()
 updateView = do
-  ek <- entryKeys <$> asks gui
-  ss <- asks state >>= liftIO . readIORef
+  ek <- asksGui entryKeys
+  ss <- askState >>= liftIO . readIORef
   l <- log <$> asks gui
   lift $ forM_ ek $ \(e,k) ->
     entrySetText e $ getCellText (fromEnum k) ss
   logAppendText $ getLogMessage ss
 
 -- generalize Reader action to ReaderT action
-up :: Reader Env a -> ReaderT Env IO a
+up :: Reader r a -> ReaderT r IO a
 up = mapReaderT (pure . runIdentity)
+
+-- convinience functions to access Env
+asksGui :: (Gui -> a) -> ReaderT Env IO a
+asksGui f = f <$> asks gui
+
+askState = asks state
+askGhci = asks ghci
