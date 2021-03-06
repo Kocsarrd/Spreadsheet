@@ -159,30 +159,46 @@ evalAndSet id = do
   ssR <- asks state
   g <- asks ghci
   l <- log <$> asks gui
+  ss <- lift $ readIORef ssR
+  case generateCode ss id of
+    Left GenMissingDep ->  logAppendText "can't evaluate: missing dependencies"
+    Left GenListType -> logAppendText "can't evaluate: list type error"
+    Right (code,ids) -> unless (code == "()") $ do
+      lift $ putStrLn code -- !! debug line
+      result <- lift $ exec g code
+      case result of
+        [res] -> lift $ forM_ (zip ids (getResult res)) (\(i,c) -> modifyIORef' ssR $ cacheCell i $ Right c)
+        _    -> do
+          lift $ modifyIORef' ssR (cacheCell id $ Left EGhciError)
+          logAppendText $ show result 
+
+logAppendText :: String -> ReaderT Env IO ()
+logAppendText str = do
+  l <- log <$> asks gui
+  sw <- logWindow <$> asks gui
   lift $ do
-    ss <- readIORef ssR
-    case generateCode ss id of
-      Left GenMissingDep -> textBufferInsertAtCursor l "can't evaluate: missing dependencies\n"
-      Left GenListType -> textBufferInsertAtCursor l "can't evaluate: list type error\n"
-      Right (code,ids) -> unless (code == "()") $ do
-        putStrLn code -- !!
-        result <- exec g code
-        case result of
-          [res] -> forM_ (zip ids (getResult res)) (\(i,c) -> modifyIORef' ssR $ cacheCell i $ Right c)
-          _    -> modifyIORef' ssR (cacheCell id $ Left EGhciError) >>
-                  textBufferInsertAtCursor l (show result ++ "\n") 
-
-
+    textBufferInsertAtCursor l (str ++ "\n")
+    mVbar <- scrolledWindowGetVScrollbar sw
+    case mVbar of
+      -- this case should never be reached
+      Nothing -> putStrLn "what is a vscrollbar lol"
+      Just vbar -> do
+        adj <- rangeGetAdjustment vbar
+        u <- adjustmentGetUpper adj
+        p <- adjustmentGetPageSize adj
+        adjustmentSetValue adj (u-p)
+    
+    
+  
   
 updateView :: ReaderT Env IO ()
 updateView = do
   ek <- entryKeys <$> asks gui
   ss <- asks state >>= liftIO . readIORef
   l <- log <$> asks gui
-  lift $ do
-    forM_ ek $ \(e,k) ->
-      entrySetText e $ getCellText (fromEnum k) ss
-    textBufferInsertAtCursor l $ getLogMessage ss ++ "\n"
+  lift $ forM_ ek $ \(e,k) ->
+    entrySetText e $ getCellText (fromEnum k) ss
+  logAppendText $ getLogMessage ss
 
 -- generalize Reader action to ReaderT action
 up :: Reader Env a -> ReaderT Env IO a
