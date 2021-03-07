@@ -124,16 +124,18 @@ setupTable = do
   ek <- asksGui entryKeys
   env <- ask
   lift $ forM_ ek $ \(entry,mn) -> do
-    onFocusIn entry $ (\e -> runReaderT (cellGetsFocus mn e) (state env))
+    onFocusIn entry $ (\e -> runReaderT (cellGetsFocus mn e) env)
     onFocusOut entry $ (\e -> runReaderT (cellLosesFocus entry mn e) env)
 
-cellGetsFocus :: (Int, Int) -> Event -> ReaderT (IORef Spreadsheet) IO Bool
+cellGetsFocus :: (Int, Int) -> Event -> ReaderT Env IO Bool
 cellGetsFocus key _ = do
-  ssR <- ask
+  ssR <- askState
+  ed <- asksGui editor
   lift $ do
     modifyIORef' ssR $ setSelected (fromEnum key)
+    ss <- readIORef ssR
+    entrySetText ed (getCellCode (fromEnum key) ss)
     --debug:
-    --ss <- readIORef ssR
     --putStrLn $ "on get: " ++ show ss
     pure False
 
