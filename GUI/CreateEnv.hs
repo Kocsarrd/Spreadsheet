@@ -21,8 +21,12 @@ createEnv = do
 -- initializes variables for evaluation
 createEvalData :: IO EvalData
 createEvalData = EvalData <$> (fst <$> startGhci "ghci" (Just ".") (\_  -> putStrLn) >>= newMVar)
+                          <*> newIORef []
                           <*> newEmptyMVar
                           <*> newEmptyMVar
+
+loadPreferences :: IO (Maybe [String])
+loadPreferences = undefined
 
 -- creates the GUI layout, without adding functionality 
 createGui :: IO Gui
