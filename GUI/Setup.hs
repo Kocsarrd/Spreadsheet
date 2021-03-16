@@ -85,11 +85,11 @@ commandLineActivated = do
   lift $ entrySetText cl ""
   case parseCommand command of
     Just (ClGhci str) -> do
-      result <- withReaderT evalControl $ execG str
+      result <- withReaderT evalControl $ execGhciQuery str
       case result of
         Left ETimeoutError -> logAppendText $ "query timed out: " ++ command
-        Right [res] -> logAppendText res
-        Right errs -> logAppendText $ intercalate "\n" errs
+        Right res -> logAppendText res
+        Left (EGhciError errs) -> logAppendText $ intercalate "\n" errs
     _ -> logAppendText $ "unknown command: " ++ command
     
 -----------------------------

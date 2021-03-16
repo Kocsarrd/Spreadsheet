@@ -1,4 +1,9 @@
-module Eval.Ghci where
+module Eval.Ghci
+  (
+  execGhciCommand,
+  execGhciQuery,
+  loadModules
+  ) where
 
 import Control.Concurrent
 import Control.Monad.Reader
@@ -16,6 +21,10 @@ execGhciCommand (code,ids) = do
   result <- execG code
   pure $ either Left (getResult ids) result
 
+execGhciQuery :: String -> ReaderT EvalControl IO (Either EvalError String)
+execGhciQuery str = do
+  result <- execGhciCommand (str, [0])
+  pure $ snd . head <$> result
 
 execG :: String -> ReaderT EvalControl IO (Either EvalError [String])
 execG command = do
