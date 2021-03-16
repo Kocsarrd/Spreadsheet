@@ -23,13 +23,14 @@ data Menubar = Menubar { saveButton :: Button
                        , modulesButton :: Button
                        } deriving Eq
 
-data Gui = Gui { mainWindow :: Window
-               , logWindow  :: ScrolledWindow
-               , log        :: TextBuffer
-               , table      :: Table
-               , entryKeys  :: [(Entry,(Int,Int))]
-               , editor     :: Entry
-               , menu       :: Menubar
+data Gui = Gui { mainWindow  :: Window
+               , logWindow   :: ScrolledWindow
+               , log         :: TextBuffer
+               , table       :: Table
+               , entryKeys   :: [(Entry,(Int,Int))]
+               , editor      :: Entry
+               , commandLine :: Entry
+               , menu        :: Menubar
                } deriving Eq
 
 data EvalConfig = EvalConfig [String]

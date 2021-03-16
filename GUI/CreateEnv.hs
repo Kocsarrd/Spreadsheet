@@ -60,6 +60,7 @@ createGui = do
       tableAttach table entry (n+1) (n+2) (m+1) (m+2) [Fill] [] 0 0
       return (entry, (m,n))
   editor <- entryNew
+  commandLine <- entryNew
   menu <- hButtonBoxNew
   buttonBoxSetLayout menu ButtonboxStart
   saveButton <- buttonNewWithMnemonic "_Save"
@@ -72,4 +73,5 @@ createGui = do
   boxPackStart vbox editor PackNatural 0
   boxPackStart vbox table PackGrow 0
   boxPackStart vbox logWindow PackGrow 0
-  pure $ Gui mainWindow logWindow buffer table entryKeys editor (Menubar saveButton loadButton modulesButton)
+  boxPackStart vbox commandLine PackNatural 0
+  pure $ Gui mainWindow logWindow buffer table entryKeys editor commandLine (Menubar saveButton loadButton modulesButton)

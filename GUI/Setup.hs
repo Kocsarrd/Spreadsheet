@@ -25,6 +25,7 @@ import Spreadsheet.Parser
 setupGui :: ReaderT Env IO ()
 setupGui = do
   setupEditor
+  setupCommandLine
   setupMenubar
   setupTable
 
@@ -63,6 +64,25 @@ editorLosesFocus e = do
                 evalAndSet key
   updateView
   pure False
+
+-----------------------------
+-- command line on the bottom
+-----------------------------
+
+setupCommandLine :: ReaderT Env IO ()
+setupCommandLine = do
+  cl <- asksGui commandLine
+  env <- ask
+  void $ lift $ onEntryActivate cl $ runReaderT commandLineActivated env
+
+-- dummy code
+commandLineActivated :: ReaderT Env IO ()
+commandLineActivated = do
+  cl <- asksGui commandLine
+  command <- lift $ entryGetText cl
+  lift $ entrySetText cl ""
+  logAppendText $ command ++ " was given"
+    
 
 -----------------------------
 -- menubar for action buttons
@@ -201,7 +221,7 @@ evalAndSet id = do
     Left GenListType -> logAppendText "can't evaluate: list type error"
     Right (code,ids) -> unless (code == "()") $ do
       lift $ putStrLn code -- !! debug line
-      result <- withReaderT evalControl $ execCommand code
+      result <- withReaderT evalControl $ execGhciCommand code
       case result of
         Left _ -> do
           lift $ modifyIORef' ssR (cacheCell id $ Left ETimeoutError)

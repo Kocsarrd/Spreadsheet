@@ -8,8 +8,8 @@ import System.Process
 import GUI.Types
 import Spreadsheet.Types
 
-execCommand :: String -> ReaderT EvalControl IO (Either EvalError [String])
-execCommand command = do
+execGhciCommand :: String -> ReaderT EvalControl IO (Either EvalError [String])
+execGhciCommand command = do
   EvalControl ghciR commandR resultR configR <- ask
   lift $ putMVar commandR command
   mResult <- lift $ takeMVar resultR
@@ -28,7 +28,7 @@ loadModules = do
   EvalControl _ _ _ configR <- ask
   EvalConfig xs <- lift $ readMVar configR
   let loadCommands = map ((++) "import ") xs
-  mapM_ execCommand loadCommands
+  mapM_ execGhciCommand loadCommands
   
 createGhci :: IO Ghci
 createGhci = do
