@@ -6,7 +6,8 @@ import Control.Monad.Reader
 import qualified Data.Function as DF (on) 
 import Data.Functor.Identity
 import Data.IORef
-import Data.List (groupBy)
+import Data.List (groupBy, intercalate)
+import Data.List.Split (splitOn)
 import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.Events
 import Language.Haskell.Ghcid
@@ -69,11 +70,12 @@ editorLosesFocus e = do
 
 setupMenubar :: ReaderT Env IO ()
 setupMenubar = do
-  (Menubar save load) <- asksGui menu
+  (Menubar save load modules) <- asksGui menu
   env <- ask
   lift $ onClicked save $ runReaderT saveAction (state env)
-  void $ lift $ onClicked load $ runReaderT loadAction env
-
+  lift $ onClicked load $ runReaderT loadAction env
+  void $ lift $ onClicked modules $ runReaderT modulesAction env
+  
 getFileChooserDialog :: FileChooserAction -> IO FileChooserDialog
 getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ " sheet") Nothing act
                                    [("Cancel", ResponseCancel), (title, ResponseAccept)]
@@ -115,6 +117,36 @@ saveAction = do
       _ -> pure ()
     widgetDestroy dialog
 
+getModulesDialog :: TextBuffer -> IO Dialog
+getModulesDialog buffer = do
+  dialog <- dialogNew
+  text <- textViewNewWithBuffer buffer
+  dialogAddActionWidget dialog text ResponseNone
+  dialogAddButton dialog "Apply" ResponseApply
+  pure dialog
+
+-- does not unload any modules
+modulesAction :: ReaderT Env IO ()
+modulesAction = do
+  configR <- eConfig <$> asks evalControl 
+  lift $ do
+    EvalConfig config <- readMVar configR
+    buffer <- textBufferNew Nothing
+    textBufferSetText buffer $ intercalate "\n" config 
+    dialog <- getModulesDialog buffer
+    widgetShowAll dialog
+    response <- dialogRun dialog
+    newModules <- bufferContent buffer
+    swapMVar configR $ EvalConfig $ splitOn "\n" newModules
+    widgetDestroy dialog
+  withReaderT evalControl loadModules
+  where
+    bufferContent :: TextBuffer -> IO String
+    bufferContent buff = do 
+      start <- textBufferGetStartIter buff
+      end <-textBufferGetEndIter buff
+      textBufferGetText buff start end False
+      
 ----------------------------------
 -- table showing the sheet content
 ----------------------------------
@@ -163,13 +195,13 @@ evalAndSet id = do
   g <- askGhci >>= lift . readMVar
   l <- asksGui log
   ss <- lift $ readIORef ssR
-  eData <- asks evalData
+  eData <- asks evalControl
   case generateCode ss id of
     Left GenMissingDep ->  logAppendText "can't evaluate: missing dependencies"
     Left GenListType -> logAppendText "can't evaluate: list type error"
     Right (code,ids) -> unless (code == "()") $ do
       lift $ putStrLn code -- !! debug line
-      result <- lift $ execCommand eData code
+      result <- withReaderT evalControl $ execCommand code
       case result of
         Left _ -> do
           lift $ modifyIORef' ssR (cacheCell id $ Left ETimeoutError)
@@ -215,4 +247,4 @@ asksGui :: Monad m => (Gui -> a) -> ReaderT Env m a
 asksGui f = f <$> asks gui
 
 askState = asks state
-askGhci = eGhci <$> asks evalData
+askGhci = eGhci <$> asks evalControl

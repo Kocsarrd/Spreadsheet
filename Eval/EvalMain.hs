@@ -10,7 +10,7 @@ import GUI.Types
 
 -- thread to evaluate expressions in ghci
 evalMain :: EvalControl -> IO ()
-evalMain (EvalControl ghciR commandR resultR) = forever $ do
+evalMain (EvalControl ghciR commandR resultR _) = forever $ do
   command <- takeMVar commandR
   ghci <- readMVar ghciR
   mResult <- timeout 200000 $ exec ghci command

@@ -1,23 +1,35 @@
 module Eval.Evaluation where
 
 import Control.Concurrent
+import Control.Monad.Reader
 import Language.Haskell.Ghcid
 import System.Process
 
 import GUI.Types
 import Spreadsheet.Types
 
-execCommand :: EvalControl -> String -> IO (Either EvalError [String])
-execCommand (EvalControl ghciR commandR resultR) command = do
-  putMVar commandR command
-  mResult <- takeMVar resultR
+execCommand :: String -> ReaderT EvalControl IO (Either EvalError [String])
+execCommand command = do
+  EvalControl ghciR commandR resultR configR <- ask
+  lift $ putMVar commandR command
+  mResult <- lift $ takeMVar resultR
   case mResult of
     Right result -> pure $ Right result
     Left pid -> do
-      callProcess "kill" ["-SIGKILL", pid]
-      createGhci >>= swapMVar ghciR >> pure (Left ETimeoutError)
+      lift $ callProcess "kill" ["-SIGKILL", pid]
+      lift $ createGhci >>= swapMVar ghciR
+      loadModules
+      pure (Left ETimeoutError)
       
 
+-- no response if module could not be loaded
+loadModules :: ReaderT EvalControl IO ()
+loadModules = do
+  EvalControl _ _ _ configR <- ask
+  EvalConfig xs <- lift $ readMVar configR
+  let loadCommands = map ((++) "import ") xs
+  mapM_ execCommand loadCommands
+  
 createGhci :: IO Ghci
 createGhci = do
   ghci <- fst <$> startGhci "ghci" (Just ".") (\_ _ -> pure ())

@@ -10,6 +10,7 @@ import Eval.EvalMain
 import GUI.Types
 import Spreadsheet.Types
 import Spreadsheet.Interface (emptySpreadsheet)
+import Persistence
 
 -- initializes global state
 createEnv :: IO Env
@@ -19,13 +20,12 @@ createEnv = do
   pure (Env evalControl) <*> createGui <*> newIORef emptySpreadsheet
 
 -- initializes variables for evaluation
+-- modules aren't loaded until first ghci reload
 createEvalControl :: IO EvalControl
 createEvalControl = EvalControl <$> (fst <$> startGhci "ghci" (Just ".") (\_  -> putStrLn) >>= newMVar)
-                          -- <*> newIORef []
-                             <*> newEmptyMVar
-                             <*> newEmptyMVar
-
-
+                                <*> newEmptyMVar
+                                <*> newEmptyMVar
+                                <*> (loadModuleConfig >>= newMVar)
 
 -- creates the GUI layout, without adding functionality 
 createGui :: IO Gui
@@ -64,10 +64,12 @@ createGui = do
   buttonBoxSetLayout menu ButtonboxStart
   saveButton <- buttonNewWithMnemonic "_Save"
   loadButton <- buttonNewWithMnemonic "_Load"
+  modulesButton <- buttonNewWithLabel "Modules"
   boxPackStart menu saveButton PackNatural 0
   boxPackStart menu loadButton PackNatural 0
+  boxPackStart menu modulesButton PackNatural 0
   boxPackStart vbox menu PackNatural 0
   boxPackStart vbox editor PackNatural 0
   boxPackStart vbox table PackGrow 0
   boxPackStart vbox logWindow PackGrow 0
-  pure $ Gui mainWindow logWindow buffer table entryKeys editor (Menubar saveButton loadButton)
+  pure $ Gui mainWindow logWindow buffer table entryKeys editor (Menubar saveButton loadButton modulesButton)
