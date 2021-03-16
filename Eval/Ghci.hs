@@ -16,7 +16,7 @@ execGhciCommand (code,ids) = do
   result <- execG code
   pure $ either Left (getResult ids) result
 
-  
+
 execG :: String -> ReaderT EvalControl IO (Either EvalError [String])
 execG command = do
   EvalControl ghciR commandR resultR configR <- ask
@@ -49,7 +49,7 @@ getResult :: [CellID] -> [String] -> Either EvalError [(CellID, String)]
 getResult ids [str] = case parse resultP "" str of
                         Left _ -> error "result parser error"
                         Right res -> Right $ zip ids res
-getResult _ xs = Left $ EGhciError $ show xs
+getResult _ xs = Left $ EGhciError xs
 
 resultP :: Parser [String]
 resultP = between (char '(') (char ')') p <|> (pure <$> many anyChar)

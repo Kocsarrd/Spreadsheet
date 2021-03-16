@@ -76,17 +76,22 @@ setupCommandLine = do
   env <- ask
   void $ lift $ onEntryActivate cl $ runReaderT commandLineActivated env
 
--- dummy code
+-- need update feature
+-- this is a bit ugly, exec should give back EGhciError
 commandLineActivated :: ReaderT Env IO ()
 commandLineActivated = do
   cl <- asksGui commandLine
   command <- lift $ entryGetText cl
   lift $ entrySetText cl ""
   case parseCommand command of
-    Just (ClGhci str) -> logAppendText "Miniszter úr"
+    Just (ClGhci str) -> do
+      result <- withReaderT evalControl $ execG str
+      case result of
+        Left ETimeoutError -> logAppendText $ "query timed out: " ++ command
+        Right [res] -> logAppendText res
+        Right errs -> logAppendText $ intercalate "\n" errs
     _ -> logAppendText $ "unknown command: " ++ command
     
-
 -----------------------------
 -- menubar for action buttons
 -----------------------------
