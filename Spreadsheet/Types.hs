@@ -19,7 +19,7 @@ data GenError = GenListType | GenMissingDep
   deriving (Eq,Show)
 
 -- evaluation error from control to model
-data EvalError = EGhciError | ETimeoutError
+data EvalError = EGhciError String | ETimeoutError
   deriving (Eq, Show)
 
 data Cell' = Str String | Number Double

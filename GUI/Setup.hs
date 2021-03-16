@@ -14,6 +14,7 @@ import Language.Haskell.Ghcid
 import Prelude hiding (log)
 
 import GUI.Types
+import Eval.CommandLine
 import Eval.Ghci
 import Persistence
 import Spreadsheet.CodeGeneration
@@ -81,7 +82,9 @@ commandLineActivated = do
   cl <- asksGui commandLine
   command <- lift $ entryGetText cl
   lift $ entrySetText cl ""
-  logAppendText $ command ++ " was given"
+  case parseCommand command of
+    Just (ClGhci str) -> logAppendText "Miniszter úr"
+    _ -> logAppendText $ "unknown command: " ++ command
     
 
 -----------------------------
@@ -209,6 +212,8 @@ cellLosesFocus entry key _ = do
 -----------------------------
 
 -- most of functionality should be moved to Eval
+-- error case contains a bug, it was too good omegalul
+-- if evaluation result is an error, child cells aren't updated
 evalAndSet :: CellID -> ReaderT Env IO ()
 evalAndSet id = do
   ssR <- askState
@@ -221,15 +226,15 @@ evalAndSet id = do
     Left GenListType -> logAppendText "can't evaluate: list type error"
     Right (code,ids) -> unless (code == "()") $ do
       lift $ putStrLn code -- !! debug line
-      result <- withReaderT evalControl $ execGhciCommand code
+      result <- withReaderT evalControl $ execGhciCommand (code,ids)
       case result of
-        Left _ -> do
+        Left ETimeoutError -> do
           lift $ modifyIORef' ssR (cacheCell id $ Left ETimeoutError)
           logAppendText $ show result
-        Right [res] -> lift $ forM_ (zip ids (getResult res))
+        Right res -> lift $ forM_ res
                                 (\(i,c) -> modifyIORef' ssR $ cacheCell i $ Right c)
-        _    -> do
-          lift $ modifyIORef' ssR (cacheCell id $ Left EGhciError)
+        Left (EGhciError err) -> do
+          lift $ modifyIORef' ssR (cacheCell id $ Left (EGhciError err))
           logAppendText $ show result 
 
 -- this should support keeping the log shorter than a max number of lines

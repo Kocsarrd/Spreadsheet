@@ -56,7 +56,8 @@ setCellState id' str' ss'
 
 -- if result is error, modify formula cache to corresponding error
 -- if not, parse the value
--- this will contain a bug (if result string starts with '=') (rep call should be replaced with a repCell' or smth)
+-- this will contain a bug (if result string starts with '=')
+-- (rep call should be replaced with a repCell' or smth)
 cacheCell :: CellID -> Either EvalError String -> Spreadsheet -> Spreadsheet
 cacheCell id result ss = overSH ss $ lookupNodeThen id
                                (changeNodeLabBy $ over (cellF.cache) $ const $ readResult result)
@@ -64,7 +65,7 @@ cacheCell id result ss = overSH ss $ lookupNodeThen id
   where
     readResult (Left err) = Left $ convErr err
     readResult (Right ok) = Right $ fromJust $ rep ok ^? cellV 
-    convErr EGhciError = FGhciError
+    convErr (EGhciError _) = FGhciError
     convErr ETimeoutError = FTimeoutError
 
 

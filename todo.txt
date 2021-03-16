@@ -1,5 +1,4 @@
 code structure:
-move evalAndSet functionality to Eval - GUI.Setup
 use better type level invariants for Formula - Spreadsheet.Types (not neccessary)
 
 features:
@@ -11,9 +10,10 @@ generalize cell row identifier - Parser
 get response from module loading - Eval.Evaluation
 user defined functions
 user command line: update commands, direct ghci calls
+level-by-level cell evaluation (not neccessary)
 
 bugs:
 modulesAction should unload modules - GUI.Setup + Persistence
 need better log messages - Interface, Parser, CodeGeneration
 fix "=" bug for cacheCell - Interface, Parser
-
+child cells don't react to faulty evaluation - GUI.Setup
