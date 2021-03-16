@@ -1,0 +1,18 @@
+code structure:
+move evalAndSet functionality to Eval - GUI.Setup
+use better type level invariants for Formula - Spreadsheet.Types (not neccessary)
+
+features:
+logAppendText should limit log length - GUI.Setup
+dynamic table size - GUI
+getCellText number length is hardcoded
+list type check - CodeGeneration
+generalize cell row identifier - Parser
+get response from module loading - Eval.Evaluation
+
+bugs:
+createEnv should load all modules to ghci - GUI.CreateEnv.hs
+modulesAction should unload modules - GUI.Setup + Persistence
+need better log messages - Interface, Parser, CodeGeneration
+fix "=" bug for cacheCell - Interface, Parser
+
