@@ -9,6 +9,8 @@ getCellText number length is hardcoded
 list type check - CodeGeneration
 generalize cell row identifier - Parser
 get response from module loading - Eval.Evaluation
+user defined functions
+user command line: update commands, direct ghci calls
 
 bugs:
 createEnv should load all modules to ghci - GUI.CreateEnv.hs
