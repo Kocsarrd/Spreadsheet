@@ -5,6 +5,7 @@ import Control.Monad.Reader
 import Graphics.UI.Gtk
 import Language.Haskell.Ghcid
 
+import Eval.Evaluation (loadModules)
 import GUI.CreateEnv
 import GUI.Setup
 import GUI.Types
@@ -21,6 +22,7 @@ runApp = do
   mainW <- mainWindow <$> asks gui
   ghci' <- eGhci <$> asks evalControl
   configR <- eConfig <$> asks evalControl
+  withReaderT evalControl loadModules
   lift $ do
     windowMaximize mainW
     widgetShowAll mainW

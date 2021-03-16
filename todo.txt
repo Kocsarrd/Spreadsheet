@@ -13,7 +13,6 @@ user defined functions
 user command line: update commands, direct ghci calls
 
 bugs:
-createEnv should load all modules to ghci - GUI.CreateEnv.hs
 modulesAction should unload modules - GUI.Setup + Persistence
 need better log messages - Interface, Parser, CodeGeneration
 fix "=" bug for cacheCell - Interface, Parser
