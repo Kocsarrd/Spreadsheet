@@ -7,8 +7,8 @@ import System.Process
 import GUI.Types
 import Spreadsheet.Types
 
-execCommand :: EvalData -> String -> IO (Either EvalError [String])
-execCommand (EvalData ghciR commandR resultR) command = do
+execCommand :: EvalControl -> String -> IO (Either EvalError [String])
+execCommand (EvalControl ghciR commandR resultR) command = do
   putMVar commandR command
   mResult <- takeMVar resultR
   case mResult of

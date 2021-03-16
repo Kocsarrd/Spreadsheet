@@ -26,13 +26,12 @@ data Gui = Gui { mainWindow :: Window
                , menu       :: Menubar
                } deriving Eq
 
-data EvalData = EvalData { eGhci    :: MVar Ghci
-                         , eModules :: IORef [String]
-                         , eCommand :: MVar String
-                         , eResult  :: MVar (Either String [String])
-                         } deriving Eq
+data EvalControl = EvalControl { eGhci    :: MVar Ghci
+                               , eCommand :: MVar String
+                               , eResult  :: MVar (Either String [String])
+                               } deriving Eq
 
-data Env = Env { evalData  :: EvalData
+data Env = Env { evalData  :: EvalControl
                , gui       :: Gui
                , state     :: IORef Spreadsheet
                } deriving Eq

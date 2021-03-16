@@ -14,19 +14,18 @@ import Spreadsheet.Interface (emptySpreadsheet)
 -- initializes global state
 createEnv :: IO Env
 createEnv = do
-  evalData <- createEvalData
-  forkIO $ evalMain evalData
-  pure (Env evalData) <*> createGui <*> newIORef emptySpreadsheet
+  evalControl <- createEvalControl
+  forkIO $ evalMain evalControl
+  pure (Env evalControl) <*> createGui <*> newIORef emptySpreadsheet
 
 -- initializes variables for evaluation
-createEvalData :: IO EvalData
-createEvalData = EvalData <$> (fst <$> startGhci "ghci" (Just ".") (\_  -> putStrLn) >>= newMVar)
-                          <*> newIORef []
-                          <*> newEmptyMVar
-                          <*> newEmptyMVar
+createEvalControl :: IO EvalControl
+createEvalControl = EvalControl <$> (fst <$> startGhci "ghci" (Just ".") (\_  -> putStrLn) >>= newMVar)
+                          -- <*> newIORef []
+                             <*> newEmptyMVar
+                             <*> newEmptyMVar
 
-loadPreferences :: IO (Maybe [String])
-loadPreferences = undefined
+
 
 -- creates the GUI layout, without adding functionality 
 createGui :: IO Gui
