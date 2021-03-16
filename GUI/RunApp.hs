@@ -5,7 +5,7 @@ import Control.Monad.Reader
 import Graphics.UI.Gtk
 import Language.Haskell.Ghcid
 
-import Eval.Evaluation (loadModules)
+import Eval.Ghci (loadModules)
 import GUI.CreateEnv
 import GUI.Setup
 import GUI.Types

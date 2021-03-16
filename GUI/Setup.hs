@@ -14,7 +14,7 @@ import Language.Haskell.Ghcid
 import Prelude hiding (log)
 
 import GUI.Types
-import Eval.Evaluation
+import Eval.Ghci
 import Persistence
 import Spreadsheet.CodeGeneration
 import Spreadsheet.Types
