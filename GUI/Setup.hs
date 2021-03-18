@@ -233,14 +233,11 @@ evalAndSet id = do
       lift $ putStrLn code -- !! debug line
       result <- withReaderT evalControl $ execGhciCommand (code,ids)
       case result of
-        Left ETimeoutError -> do
-          lift $ modifyIORef' ssR (cacheCell id $ Left ETimeoutError)
-          logAppendText $ show result
         Right res -> lift $ forM_ res
                                 (\(i,c) -> modifyIORef' ssR $ cacheCell i $ Right c)
-        Left (EGhciError err) -> do
-          lift $ modifyIORef' ssR (cacheCell id $ Left (EGhciError err))
-          logAppendText $ show result 
+        Left err -> do
+          lift $ forM_ ids (\id -> modifyIORef' ssR $ cacheCell id $ Left err)
+          logAppendText $ show result
 
 -- this should support keeping the log shorter than a max number of lines
 logAppendText :: String -> ReaderT Env IO ()
