@@ -216,9 +216,6 @@ cellLosesFocus entry key _ = do
 -- actions called by handlers
 -----------------------------
 
--- most of functionality should be moved to Eval
--- error case contains a bug, it was too good omegalul
--- if evaluation result is an error, child cells aren't updated
 evalAndSet :: CellID -> ReaderT Env IO ()
 evalAndSet id = do
   ssR <- askState

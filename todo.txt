@@ -16,4 +16,3 @@ bugs:
 modulesAction should unload modules - GUI.Setup + Persistence
 need better log messages - Interface, Parser, CodeGeneration
 fix "=" bug for cacheCell - Interface, Parser
-child cells don't react to faulty evaluation - GUI.Setup
