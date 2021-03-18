@@ -108,12 +108,14 @@ setupMenubar = do
 -- need to add are you sure prompt 
 newAction :: ReaderT Env IO ()
 newAction = do
-  ssR <- askState
-  fileR <- askFile
-  lift $ writeIORef ssR emptySpreadsheet
-  lift $ writeIORef fileR $ Nothing
-  setTitle "Fazekas Sándor"
-  updateView
+  answer <- lift $ runAreYouSureDialog
+  when answer $ do
+    ssR <- askState
+    fileR <- askFile
+    lift $ writeIORef ssR emptySpreadsheet
+    lift $ writeIORef fileR $ Nothing
+    setTitle "Fazekas Sándor"
+    updateView
   
 getFileChooserDialog :: FileChooserAction -> IO FileChooserDialog
 getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ " sheet") Nothing act
@@ -136,10 +138,12 @@ loadAction = do
                          case fname of
                            Nothing -> pure ()
                            Just file -> do
-                             lift $ loadSheet file >>= either putStrLn (writeIORef ssR)
-                             fileR <- askFile
-                             lift $ writeIORef fileR $ Just $ File file Saved
-                             setTitle file
+                             answer <- lift $ runAreYouSureDialog
+                             when answer $ do
+                               lift $ loadSheet file >>= either putStrLn (writeIORef ssR)
+                               fileR <- askFile
+                               lift $ writeIORef fileR $ Just $ File file Saved
+                               setTitle file
     _ -> pure ()
   lift $ widgetDestroy dialog
   updateView
@@ -162,20 +166,29 @@ saveNewFile = do
   lift $ widgetShow dialog
   response <- lift $ dialogRun dialog
   case response of
-    ResponseAccept -> do fname <- lift $ fileChooserGetFilename dialog
-                         case fname of
+    ResponseAccept -> do mFname <- lift $ fileChooserGetFilename dialog
+                         case mFname of
                            Nothing -> pure ()
-                           Just file -> do
-                             lift $ saveSheet (file ++ ".fsandor") ss
+                           Just fname -> do
                              fileR <- askFile
-                             lift $ writeIORef fileR $ Just $ File file Saved
-                             setTitle file
+                             lift $ saveSheet (fname ++ ".fsandor") ss
+                             lift $ writeIORef fileR $ Just $ File fname Saved
+                             setTitle fname
     _ -> pure ()
   lift $ widgetDestroy dialog
+
+runAreYouSureDialog :: IO Bool
+runAreYouSureDialog = do
+  dialog <- dialogNew
+  windowSetTitle dialog "Are you sure? Any unsaved work will be lost!"
+  dialogAddButton dialog "Yes" ResponseYes
+  dialogAddButton dialog "No" ResponseNo
+  ((==) ResponseYes) <$> (dialogRun dialog <* widgetDestroy dialog)
 
 getModulesDialog :: TextBuffer -> IO Dialog
 getModulesDialog buffer = do
   dialog <- dialogNew
+  windowSetTitle dialog "Modules loaded to GHCi"
   text <- textViewNewWithBuffer buffer
   dialogAddActionWidget dialog text ResponseNone
   dialogAddButton dialog "Apply" ResponseApply
