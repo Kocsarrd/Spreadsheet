@@ -98,11 +98,21 @@ commandLineActivated = do
 
 setupMenubar :: ReaderT Env IO ()
 setupMenubar = do
-  (Menubar save load modules) <- asksGui menu
+  (Menubar new save load modules) <- asksGui menu
   env <- ask
-  lift $ onClicked save $ runReaderT saveAction (state env)
+  lift $ onClicked new $ runReaderT newAction env
+  lift $ onClicked save $ runReaderT saveAction env
   lift $ onClicked load $ runReaderT loadAction env
   void $ lift $ onClicked modules $ runReaderT modulesAction env
+
+-- dummy
+getNewFileDialog :: IO Dialog
+getNewFileDialog = undefined
+
+-- dummy
+newAction :: ReaderT Env IO ()
+newAction = do
+  pure ()
   
 getFileChooserDialog :: FileChooserAction -> IO FileChooserDialog
 getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ " sheet") Nothing act
@@ -113,37 +123,52 @@ getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ " sheet") Noth
               FileChooserActionSave -> "Save"
               _                     -> "Fazekas Sándor"
 
+-- need to add are you sure prompt
 loadAction :: ReaderT Env IO ()
 loadAction = do
   ssR  <- askState
-  lift $ do
-    dialog <- getFileChooserDialog FileChooserActionOpen
-    widgetShow dialog
-    response <- dialogRun dialog
-    case response of
-      ResponseAccept -> do fname <- fileChooserGetFilename dialog
-                           case fname of
-                             Nothing -> pure ()
-                             Just file -> loadSheet file >>= either putStrLn (writeIORef ssR)      
-      _ -> pure ()
-    widgetDestroy dialog
+  dialog <- lift $ getFileChooserDialog FileChooserActionOpen
+  lift $ widgetShow dialog
+  response <- lift $ dialogRun dialog
+  case response of
+    ResponseAccept -> do fname <- lift $ fileChooserGetFilename dialog
+                         case fname of
+                           Nothing -> pure ()
+                           Just file -> do
+                             lift $ loadSheet file >>= either putStrLn (writeIORef ssR)
+                             fileR <- askFile
+                             lift $ writeIORef fileR $ Just $ File file Saved 
+    _ -> pure ()
+  lift $ widgetDestroy dialog
   updateView
 
-saveAction :: ReaderT (IORef Spreadsheet) IO ()
+saveAction :: ReaderT Env IO ()
 saveAction = do
-  ss <- ask >>= liftIO . readIORef
-  lift $ do
-    dialog <- getFileChooserDialog FileChooserActionSave
-    fileChooserSetDoOverwriteConfirmation dialog True
-    widgetShow dialog
-    response <- dialogRun dialog
-    case response of
-      ResponseAccept -> do fname <- fileChooserGetFilename dialog
-                           case fname of
-                             Nothing -> pure ()
-                             Just file -> saveSheet (file ++ ".fsandor") ss
-      _ -> pure ()
-    widgetDestroy dialog
+  mFile <- askFile >>= liftIO . readIORef
+  case mFile of
+    Nothing -> saveNewFile
+    Just (File fp Modified) -> do
+      ss <- askState >>= liftIO . readIORef
+      lift $ saveSheet fp ss
+    _ -> pure ()
+  
+saveNewFile :: ReaderT Env IO ()
+saveNewFile = do
+  ss <- askState >>= liftIO . readIORef
+  dialog <- lift $ getFileChooserDialog FileChooserActionSave
+  lift $ fileChooserSetDoOverwriteConfirmation dialog True
+  lift $ widgetShow dialog
+  response <- lift $ dialogRun dialog
+  case response of
+    ResponseAccept -> do fname <- lift $ fileChooserGetFilename dialog
+                         case fname of
+                           Nothing -> pure ()
+                           Just file -> do
+                             lift $ saveSheet (file ++ ".fsandor") ss
+                             fileR <- askFile
+                             lift $ writeIORef fileR $ Just $ File file Saved
+    _ -> pure ()
+  lift $ widgetDestroy dialog
 
 getModulesDialog :: TextBuffer -> IO Dialog
 getModulesDialog buffer = do
@@ -235,7 +260,9 @@ evalAndSet id = do
         Left err -> do
           lift $ forM_ ids (\id -> modifyIORef' ssR $ cacheCell id $ Left err)
           logAppendText $ show result
-
+  fileR <- askFile 
+  lift $ modifyIORef' fileR $ fmap (setStatus Modified)
+  
 -- this should support keeping the log shorter than a max number of lines
 logAppendText :: String -> ReaderT Env IO ()
 logAppendText str = do
@@ -272,3 +299,4 @@ asksGui f = f <$> asks gui
 
 askState = asks state
 askGhci = eGhci <$> asks evalControl
+askFile = asks file

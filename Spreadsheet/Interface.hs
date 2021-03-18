@@ -79,7 +79,7 @@ getLogMessage :: Spreadsheet -> String
 getLogMessage ss = case ss^.logMessage of
                      Just str -> str
                      Nothing  -> ""
-
+                     
 isLegal :: CellID -> [CellID] -> Spreadsheet -> Bool
 isLegal id refs ss = all (\ref -> isNothing $ sp ref id $ ss^.sheet) refs
 

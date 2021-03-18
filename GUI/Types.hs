@@ -1,5 +1,6 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module GUI.Types where
 
@@ -9,6 +10,7 @@ import Data.Serialize (Serialize)
 import GHC.Generics
 import Graphics.UI.Gtk (Button, Entry, Table, TextBuffer, ScrolledWindow, Window)
 import Language.Haskell.Ghcid (Ghci)
+import Lens.Micro.Platform
 
 import Spreadsheet.Types (Spreadsheet)
 
@@ -18,7 +20,9 @@ sizeX = 15
 sizeY = 19
 
 -- types for global state
-data Menubar = Menubar { saveButton :: Button
+
+data Menubar = Menubar { newButton :: Button
+                       , saveButton :: Button
                        , loadButton :: Button
                        , modulesButton :: Button
                        } deriving Eq
@@ -44,7 +48,16 @@ data EvalControl = EvalControl { eGhci    :: MVar Ghci
                                , eConfig  :: MVar EvalConfig 
                                } deriving Eq
 
+data SaveStatus = Saved | Modified
+  deriving Eq
+
+data File = File FilePath SaveStatus
+  deriving Eq
+
+setStatus st (File fp _) = File fp st  
+
 data Env = Env { evalControl  :: EvalControl
-               , gui       :: Gui
-               , state     :: IORef Spreadsheet
+               , gui          :: Gui
+               , state        :: IORef Spreadsheet
+               , file         :: IORef (Maybe File)
                } deriving Eq

@@ -17,7 +17,7 @@ createEnv :: IO Env
 createEnv = do
   evalControl <- createEvalControl
   forkIO $ evalMain evalControl
-  pure (Env evalControl) <*> createGui <*> newIORef emptySpreadsheet
+  pure (Env evalControl) <*> createGui <*> newIORef emptySpreadsheet <*> newIORef Nothing
 
 -- initializes variables for evaluation
 -- modules aren't loaded until first ghci reload
@@ -63,9 +63,11 @@ createGui = do
   commandLine <- entryNew
   menu <- hButtonBoxNew
   buttonBoxSetLayout menu ButtonboxStart
+  newButton <- buttonNewWithMnemonic "_New"
   saveButton <- buttonNewWithMnemonic "_Save"
   loadButton <- buttonNewWithMnemonic "_Load"
   modulesButton <- buttonNewWithLabel "Modules"
+  boxPackStart menu newButton PackNatural 0
   boxPackStart menu saveButton PackNatural 0
   boxPackStart menu loadButton PackNatural 0
   boxPackStart menu modulesButton PackNatural 0
@@ -74,4 +76,5 @@ createGui = do
   boxPackStart vbox table PackGrow 0
   boxPackStart vbox logWindow PackGrow 0
   boxPackStart vbox commandLine PackNatural 0
-  pure $ Gui mainWindow logWindow buffer table entryKeys editor commandLine (Menubar saveButton loadButton modulesButton)
+  pure $ Gui mainWindow logWindow buffer table entryKeys editor commandLine
+           (Menubar newButton saveButton loadButton modulesButton)
