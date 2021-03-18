@@ -105,14 +105,15 @@ setupMenubar = do
   lift $ onClicked load $ runReaderT loadAction env
   void $ lift $ onClicked modules $ runReaderT modulesAction env
 
--- dummy
-getNewFileDialog :: IO Dialog
-getNewFileDialog = undefined
-
--- dummy
+-- need to add are you sure prompt 
 newAction :: ReaderT Env IO ()
 newAction = do
-  pure ()
+  ssR <- askState
+  fileR <- askFile
+  lift $ writeIORef ssR emptySpreadsheet
+  lift $ writeIORef fileR $ Nothing
+  setTitle "Fazekas Sándor"
+  updateView
   
 getFileChooserDialog :: FileChooserAction -> IO FileChooserDialog
 getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ " sheet") Nothing act
@@ -137,7 +138,8 @@ loadAction = do
                            Just file -> do
                              lift $ loadSheet file >>= either putStrLn (writeIORef ssR)
                              fileR <- askFile
-                             lift $ writeIORef fileR $ Just $ File file Saved 
+                             lift $ writeIORef fileR $ Just $ File file Saved
+                             setTitle file
     _ -> pure ()
   lift $ widgetDestroy dialog
   updateView
@@ -167,6 +169,7 @@ saveNewFile = do
                              lift $ saveSheet (file ++ ".fsandor") ss
                              fileR <- askFile
                              lift $ writeIORef fileR $ Just $ File file Saved
+                             setTitle file
     _ -> pure ()
   lift $ widgetDestroy dialog
 
@@ -288,6 +291,9 @@ updateView = do
   lift $ forM_ ek $ \(e,k) ->
     entrySetText e $ getCellText (fromEnum k) ss
   logAppendText $ getLogMessage ss
+
+setTitle :: String -> ReaderT Env IO ()
+setTitle str = asksGui mainWindow >>= liftIO . flip windowSetTitle str
 
 -- generalize Reader action to ReaderT action
 up :: Reader r a -> ReaderT r IO a
