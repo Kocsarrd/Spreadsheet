@@ -13,7 +13,7 @@ evalMain :: EvalControl -> IO ()
 evalMain (EvalControl ghciR commandR resultR _) = forever $ do
   command <- takeMVar commandR
   ghci <- readMVar ghciR
-  mResult <- timeout 200000 $ exec ghci command
+  mResult <- timeout 1000000 $ exec ghci command
   case mResult of
     Nothing -> do
       let handle = process ghci

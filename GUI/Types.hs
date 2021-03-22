@@ -25,6 +25,7 @@ data Menubar = Menubar { newButton :: Button
                        , saveButton :: Button
                        , loadButton :: Button
                        , modulesButton :: Button
+                       , userModulesButton :: Button
                        } deriving Eq
 
 data Gui = Gui { mainWindow  :: Window
@@ -37,8 +38,13 @@ data Gui = Gui { mainWindow  :: Window
                , menu        :: Menubar
                } deriving Eq
 
-data EvalConfig = EvalConfig [String]
+data EvalConfig = EvalConfig { modules :: [String]
+                             , paths :: [String]
+                             }
   deriving (Eq, Generic)
+
+ecSetModules ms (EvalConfig _ ps) = EvalConfig ms ps
+ecSetPaths ps (EvalConfig ms _) = EvalConfig ms ps
 
 instance Serialize EvalConfig where
 

@@ -26,7 +26,7 @@ loadModuleConfig :: IO EvalConfig
 loadModuleConfig = do
   config <- loadSheet moduleConfigFile
   case config of
-    Left _ -> pure $ EvalConfig []
-    Right xs -> pure xs
+    Left _ -> pure $ EvalConfig [] []
+    Right c -> pure c
 
 

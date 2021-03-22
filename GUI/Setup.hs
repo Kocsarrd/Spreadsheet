@@ -98,12 +98,13 @@ commandLineActivated = do
 
 setupMenubar :: ReaderT Env IO ()
 setupMenubar = do
-  (Menubar new save load modules) <- asksGui menu
+  (Menubar new save load modules uModules) <- asksGui menu
   env <- ask
   lift $ onClicked new $ runReaderT newAction env
   lift $ onClicked save $ runReaderT saveAction env
   lift $ onClicked load $ runReaderT loadAction env
-  void $ lift $ onClicked modules $ runReaderT modulesAction env
+  lift $ onClicked modules $ runReaderT (modulesAction EditModules) env
+  void $ lift $ onClicked uModules $ runReaderT (modulesAction EditPaths) env
 
 -- need to add are you sure prompt 
 newAction :: ReaderT Env IO ()
@@ -185,6 +186,9 @@ runAreYouSureDialog = do
   dialogAddButton dialog "No" ResponseNo
   ((==) ResponseYes) <$> (dialogRun dialog <* widgetDestroy dialog)
 
+data ModuleActionType = EditPaths | EditModules
+  deriving Eq
+
 getModulesDialog :: TextBuffer -> IO Dialog
 getModulesDialog buffer = do
   dialog <- dialogNew
@@ -195,18 +199,22 @@ getModulesDialog buffer = do
   pure dialog
 
 -- does not unload any modules
-modulesAction :: ReaderT Env IO ()
-modulesAction = do
+modulesAction :: ModuleActionType -> ReaderT Env IO ()
+modulesAction mat = do
   configR <- eConfig <$> asks evalControl 
   lift $ do
-    EvalConfig config <- readMVar configR
+    EvalConfig ms ps <- readMVar configR
     buffer <- textBufferNew Nothing
-    textBufferSetText buffer $ intercalate "\n" config 
+    let (ls,ecSet) = case mat of
+                       EditModules -> (ms, ecSetModules)
+                       EditPaths -> (ps, ecSetPaths)
+    textBufferSetText buffer $ intercalate "\n" ls 
     dialog <- getModulesDialog buffer
     widgetShowAll dialog
     response <- dialogRun dialog
     newModules <- bufferContent buffer
-    swapMVar configR $ EvalConfig $ splitOn "\n" newModules
+    c <- readMVar configR
+    swapMVar configR $ ecSet (splitOn "\n" newModules) c
     widgetDestroy dialog
   withReaderT evalControl loadModules
   where

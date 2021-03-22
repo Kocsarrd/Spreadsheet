@@ -41,12 +41,15 @@ execG command = do
       
 
 -- no response if module could not be loaded
+-- sets paths and loads modules
+-- this is currently very ugly
 loadModules :: ReaderT EvalControl IO ()
 loadModules = do
   EvalControl _ _ _ configR <- ask
-  EvalConfig xs <- lift $ readMVar configR
-  let loadCommands = map ((++) "import ") xs
-  mapM_ execG loadCommands
+  EvalConfig ms ps <- lift $ readMVar configR
+  let pathCommands = map ((++) ":set -i") ps
+  let loadCommands = map ((++) "import ") ms ++ map ((++) ":l ") ms 
+  mapM_ execG $ pathCommands ++ loadCommands
   
 createGhci :: IO Ghci
 createGhci = do
