@@ -98,13 +98,13 @@ commandLineActivated = do
 
 setupMenubar :: ReaderT Env IO ()
 setupMenubar = do
-  (Menubar new save load modules uModules) <- asksGui menu
+  (Menubar new save load modules paths) <- asksGui menu
   env <- ask
   lift $ onClicked new $ runReaderT newAction env
   lift $ onClicked save $ runReaderT saveAction env
   lift $ onClicked load $ runReaderT loadAction env
   lift $ onClicked modules $ runReaderT (modulesAction EditModules) env
-  void $ lift $ onClicked uModules $ runReaderT (modulesAction EditPaths) env
+  void $ lift $ onClicked paths $ runReaderT (modulesAction EditPaths) env
 
 -- need to add are you sure prompt 
 newAction :: ReaderT Env IO ()

@@ -25,7 +25,7 @@ data Menubar = Menubar { newButton :: Button
                        , saveButton :: Button
                        , loadButton :: Button
                        , modulesButton :: Button
-                       , userModulesButton :: Button
+                       , pathsButton :: Button
                        } deriving Eq
 
 data Gui = Gui { mainWindow  :: Window

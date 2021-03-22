@@ -28,6 +28,7 @@ execGhciQuery str = do
 
 execG :: String -> ReaderT EvalControl IO (Either EvalError [String])
 execG command = do
+  lift $ putStrLn command
   EvalControl ghciR commandR resultR configR <- ask
   lift $ putMVar commandR command
   mResult <- lift $ takeMVar resultR
@@ -48,7 +49,8 @@ loadModules = do
   EvalControl _ _ _ configR <- ask
   EvalConfig ms ps <- lift $ readMVar configR
   let pathCommands = map ((++) ":set -i") ps
-  let loadCommands = map ((++) "import ") ms ++ map ((++) ":l ") ms 
+  let loadCommands = map ((++) "import ") ms ++ map ((++) ":l ") ms
+  --execG ":m"
   mapM_ execG $ pathCommands ++ loadCommands
   
 createGhci :: IO Ghci

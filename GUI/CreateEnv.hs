@@ -67,16 +67,16 @@ createGui = do
   saveButton <- buttonNewWithMnemonic "_Save"
   loadButton <- buttonNewWithMnemonic "_Load"
   modulesButton <- buttonNewWithLabel "Modules"
-  userModulesButton <- buttonNewWithLabel "User modules"
+  pathsButton <- buttonNewWithLabel "Search paths"
   boxPackStart menu newButton PackNatural 0
   boxPackStart menu saveButton PackNatural 0
   boxPackStart menu loadButton PackNatural 0
   boxPackStart menu modulesButton PackNatural 0
-  boxPackStart menu userModulesButton PackNatural 0
+  boxPackStart menu pathsButton PackNatural 0
   boxPackStart vbox menu PackNatural 0
   boxPackStart vbox editor PackNatural 0
   boxPackStart vbox table PackGrow 0
   boxPackStart vbox logWindow PackGrow 0
   boxPackStart vbox commandLine PackNatural 0
   pure $ Gui mainWindow logWindow buffer table entryKeys editor commandLine
-           (Menubar newButton saveButton loadButton modulesButton userModulesButton)
+           (Menubar newButton saveButton loadButton modulesButton pathsButton)
