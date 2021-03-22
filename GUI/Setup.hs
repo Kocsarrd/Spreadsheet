@@ -273,6 +273,7 @@ evalAndSet id = do
   ss <- lift $ readIORef ssR
   eData <- asks evalControl
   case generateCode ss id of
+    Left GenEmptyCell -> pure ()
     Left GenMissingDep ->  logAppendText "can't evaluate: missing dependencies"
     Left GenListType -> logAppendText "can't evaluate: list type error"
     Right (code,ids) -> unless (code == "()") $ do

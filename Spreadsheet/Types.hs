@@ -15,7 +15,7 @@ type CellID = Int
 -- some of the errors might need to be moved
 
 -- errors of code generation
-data GenError = GenListType | GenMissingDep
+data GenError = GenListType | GenMissingDep | GenEmptyCell
   deriving (Eq,Show)
 
 -- evaluation error from control to model

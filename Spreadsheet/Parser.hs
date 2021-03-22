@@ -3,7 +3,6 @@ module Spreadsheet.Parser (rep) where
 import Control.Applicative (liftA2)
 import Data.Char
 import Data.Functor ((<&>))
-import Data.Ratio
 import Text.Parsec
 import Text.Parsec.Char
 import Text.Parsec.String
@@ -13,9 +12,13 @@ import Spreadsheet.Types
 -- cell representation of user giver string
 -- an error may only occur when head str == '='
 rep :: String -> Cell
-rep str = case parse (cellP str) "" str of
+rep str = case parse (cellP str') "" str' of
   Right cell -> cell
   Left  err  -> For $ Formula str (Left FNoParse) Nothing
+  where
+    str' = if isStringLiteral str then init $ tail str else str
+    isStringLiteral (x:y:xs) = x == '"' && last (y:xs) == '"'
+    isStringLiteral _ = False
 
 cellP :: String -> Parser Cell
 cellP str = try numberP

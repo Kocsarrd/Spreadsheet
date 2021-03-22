@@ -8,11 +8,10 @@ getCellText number length is hardcoded
 list type check - CodeGeneration
 generalize cell row identifier - Parser
 get response from module loading - Eval.Evaluation
-user defined functions
 user command line: update commands
 level-by-level cell evaluation (not neccessary)
 
 bugs:
-modulesAction should unload modules - GUI.Setup + Persistence
 need better log messages - Interface, Parser, CodeGeneration
 fix "=" bug for cacheCell - Interface, Parser
+fix ghcierror for empty cell dependencies
