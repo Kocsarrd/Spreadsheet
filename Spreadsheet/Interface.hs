@@ -18,6 +18,7 @@ import Lens.Micro.Platform hiding ((&))
 
 import System.IO.Unsafe
 
+import GraphFunctions
 import Spreadsheet.Types
 import Spreadsheet.Parser
 
@@ -122,21 +123,4 @@ getCellCode id ss = case lab (ss^.sheet) id of
 showCell' :: Cell' -> String
 showCell' (Str str) = str
 showCell' (Number num) = show num
-
--- useful helper functions
-lookupNodeThen :: DynGraph gr => Node
-               -> (Decomp gr a b -> gr a b)
-               -> (Decomp gr a b -> gr a b)
-               ->  gr a b -> gr a b
-lookupNodeThen node ifFound ifNot gr = case match node gr of
-  dc@(Just c, _) -> ifFound dc
-  dc@_           -> ifNot dc
-
--- to call in lookupNodeThen' first case
-changeNodeLabBy :: DynGraph gr => (a -> a) -> Decomp gr a b -> gr a b
-changeNodeLabBy f (Just c, cg) = over _3 f c & cg
-
-changeNodeLab :: DynGraph gr => a -> Decomp gr a b -> gr a b
-changeNodeLab = changeNodeLabBy . const 
-
 
