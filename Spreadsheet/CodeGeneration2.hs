@@ -3,8 +3,9 @@ module Spreadsheet.CodeGeneration2 (generateCode, GenError(..)) where
 import Data.Graph.Inductive
 import Data.Graph.Inductive.PatriciaTree (Gr) 
 import Data.Graph.Inductive.Query
-import Data.List (intercalate, nub, (\\))
+import Data.List (intercalate, nub, (\\), sortBy)
 import Data.List.Split (splitOn)
+import Data.Ord (comparing)
 import Data.Maybe (fromJust)
 import Lens.Micro
 
@@ -59,7 +60,7 @@ depList sh id = if ok then Just (lOuterDeps, lDependOnId) else Nothing
     lOuterDeps = map (\i -> (fromJust (lab sh i), i)) outerDeps
     lDependOnId = map (\i -> (fromJust (lab sh i), i)) dependOnId  
     outerDeps' = nub (dependOnId >>= pre sh) \\ dependOnId
-    dependOnId' = bfs id sh
+    dependOnId' = map fst $ sortBy (comparing snd) $ lpLevel id sh
     (outerDeps,dependOnId) = case lab sh id of
                                Just (Val _) -> (id : outerDeps', tail dependOnId')
                                Just (For _) -> (outerDeps',dependOnId')
