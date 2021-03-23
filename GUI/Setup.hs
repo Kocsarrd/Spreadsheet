@@ -115,7 +115,7 @@ newAction = do
     fileR <- askFile
     lift $ writeIORef ssR emptySpreadsheet
     lift $ writeIORef fileR $ Nothing
-    setTitle "Fazekas Sándor"
+    setTitle "*new file"
     updateView
   
 getFileChooserDialog :: FileChooserAction -> IO FileChooserDialog

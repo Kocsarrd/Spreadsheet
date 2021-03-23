@@ -33,7 +33,7 @@ createGui = do
   initGUI
   mainWindow <- windowNew
   vbox <- vBoxNew False 10
-  set mainWindow [windowTitle := "Fazekas Sándor",
+  set mainWindow [windowTitle := "*new file",
                   containerChild := vbox]
   logWindow <- scrolledWindowNew Nothing Nothing
   log <- textViewNew

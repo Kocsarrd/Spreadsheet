@@ -81,7 +81,7 @@ getLogMessage ss = case ss^.logMessage of
                      Nothing  -> ""
                      
 isLegal :: CellID -> [CellID] -> Spreadsheet -> Bool
-isLegal id refs ss = all (\ref -> isNothing $ sp ref id $ ss^.sheet) refs
+isLegal id refs ss = all (\ref -> isNothing $ sp id ref $ ss^.sheet) refs
 
 toCellName :: CellID -> String
 toCellName id = toEnum (r+65) : show c
