@@ -21,8 +21,8 @@ changeNodeLab :: DynGraph gr => a -> Decomp gr a b -> gr a b
 changeNodeLab = changeNodeLabBy . const 
 
 -- every edge counts as one
-lpLevel :: (DynGraph gr) => Node -> gr a b -> gr Int b
-lpLevel v gr = lg
+lpLevel :: (DynGraph gr) => Node -> gr a b -> [(Node,Int)]
+lpLevel v gr = labNodes lg
   where
     lg = foldl go (nmap (const 0) sg) vs 
     go gr' v' = foldr (go' $ fromJust (lab gr' v')) gr' (suc gr' v')

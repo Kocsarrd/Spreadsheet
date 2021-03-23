@@ -64,6 +64,7 @@ depList sh id = if ok then Just (lOuterDeps, lDependOnId) else Nothing
                                Just (Val _) -> (id : outerDeps', tail dependOnId')
                                Just (For _) -> (outerDeps',dependOnId')
                                _ -> ([],[])
+                               
 cached :: (Cell, CellID) -> Bool
 cached (Val _ ,_) = True
 cached (For (Formula _ (Right _) _),_) = True
