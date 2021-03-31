@@ -30,8 +30,8 @@ codeG (xs,ys) = (map go xs, map go2 ys)
 -- generate code for cells that do not depend on the changed cell
 cacheG :: Cell -> String
 cacheG (Val EmptyCell) = "Nothing"
-cacheG (Val (Str str)) = '"' : str ++ "\""
-cacheG (Val (Number num)) = trimmed
+cacheG (Val (Str str)) = "Just " ++ '"' : str ++ "\""
+cacheG (Val (Number num)) = "Just " ++ trimmed
   where
     trimmed = if decimal == "0" then integer else numS
     [integer,decimal] = splitOn "." numS
@@ -44,8 +44,8 @@ cellG :: Cell -> String
 cellG (For (Formula _ _ (Just pieces))) = foldr go "" pieces
   where
     go (Code code) acc = code ++ acc
-    go (Refs [id]) acc = 'v' : show id ++ acc
-    go (Refs ids)  acc = '[' : (intercalate "," $ map (('v':) . show) ids) ++ "]"
+    go (Refs [id]) acc = "Just " ++ 'v' : show id ++ acc
+    go (Refs ids)  acc = '[' : (intercalate "," $ map (\id -> 'v' : show id) ids) ++ "]"
 cellG (For _) = error "cellG: cell was not ready"
 cellG _ = error "cellG: cell was not a formula"
 
