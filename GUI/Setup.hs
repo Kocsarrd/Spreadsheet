@@ -245,7 +245,7 @@ cellGetsFocus key _ = do
     ss <- readIORef ssR
     entrySetText ed (getCellCode (fromEnum key) ss)
     --debug:
-    --putStrLn $ "on get: " ++ show ss
+    putStrLn $ "on get: " ++ show ss
     pure False
 
 cellLosesFocus :: Entry -> (Int,Int) -> Event -> ReaderT Env IO Bool

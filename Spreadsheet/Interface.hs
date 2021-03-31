@@ -43,7 +43,7 @@ setCellState id' str' ss'
     ssB = overSH ss' $ delEdges (zip oldRefs $ repeat id')
     ssB' = overSH ssB $ lookupNodeThen id' (changeNodeLab cell') (const $ insNode (id',cell') $ ssB^.sheet) 
     ssN' = overSH ssB' (\sh -> foldr go sh newRefs)
-    go r sh = lookupNodeThen r (const sh) (const $ insNode (r, Val (Str "")) sh) sh
+    go r sh = lookupNodeThen r (const sh) (const $ insNode (r, Val EmptyCell) sh) sh
     ssN = overSH ssN' $ insEdges (zip3 newRefs (repeat id') $ repeat 1)
     newRefs = references cell'
     cell' = rep str'
