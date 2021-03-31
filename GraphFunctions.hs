@@ -20,6 +20,7 @@ changeNodeLabBy f (Just c, cg) = over _3 f c & cg
 changeNodeLab :: DynGraph gr => a -> Decomp gr a b -> gr a b
 changeNodeLab = changeNodeLabBy . const 
 
+-- longest path lengths from given node
 -- every edge counts as one
 lpLevel :: (DynGraph gr) => Node -> gr a b -> [(Node,Int)]
 lpLevel v gr = labNodes lg

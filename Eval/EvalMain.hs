@@ -26,5 +26,5 @@ evalMain (EvalControl ghciR commandR resultR _) = forever $ do
           putMVar resultR $ Left childPid
     Just result -> putMVar resultR $ Right $ result
   -- debug
-  putStrLn "Fazekas Sándor"
+  --putStrLn "Fazekas Sándor"
 

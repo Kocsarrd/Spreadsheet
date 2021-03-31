@@ -28,7 +28,8 @@ execGhciQuery str = do
 
 execG :: String -> ReaderT EvalControl IO (Either EvalError [String])
 execG command = do
-  lift $ putStrLn command
+  --debug
+  --lift $ putStrLn command
   EvalControl ghciR commandR resultR configR <- ask
   lift $ putMVar commandR command
   mResult <- lift $ takeMVar resultR

@@ -18,6 +18,7 @@ import Eval.CommandLine
 import Eval.Ghci
 import Persistence
 import Spreadsheet.CodeGeneration
+import qualified Spreadsheet.CodeGeneration2 as CG
 import Spreadsheet.Types
 import Spreadsheet.Interface
 import Spreadsheet.Parser
@@ -245,7 +246,7 @@ cellGetsFocus key _ = do
     ss <- readIORef ssR
     entrySetText ed (getCellCode (fromEnum key) ss)
     --debug:
-    putStrLn $ "on get: " ++ show ss
+    --putStrLn $ "on get: " ++ show ss
     pure False
 
 cellLosesFocus :: Entry -> (Int,Int) -> Event -> ReaderT Env IO Bool
@@ -272,12 +273,17 @@ evalAndSet id = do
   l <- asksGui log
   ss <- lift $ readIORef ssR
   eData <- asks evalControl
+  case CG.generateCode ss id of
+    Left err -> lift $ putStrLn $ show err
+    Right (xs,ys) -> lift $ do
+      mapM_ putStrLn xs
+      mapM_ (\(c,i) -> putStrLn $ show i ++ ' ' : c) ys
   case generateCode ss id of
     Left GenEmptyCell -> pure ()
     Left GenMissingDep ->  logAppendText "can't evaluate: missing dependencies"
     Left GenListType -> logAppendText "can't evaluate: list type error"
     Right (code,ids) -> unless (code == "()") $ do
-      lift $ putStrLn code -- !! debug line
+      --lift $ putStrLn code -- !! debug line
       result <- withReaderT evalControl $ execGhciCommand (code,ids)
       case result of
         Right res -> lift $ forM_ res
