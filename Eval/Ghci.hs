@@ -53,7 +53,7 @@ loadModules = do
   execG ":l"
   mapM_ execG $ pathCommands ++ loadCommands
   -- needed for (€) operator to work
-  execGhciCommand ":l Empty.hs"
+  void $ execGhciCommand ":l Empty.hs"
   
 createGhci :: IO Ghci
 createGhci = do

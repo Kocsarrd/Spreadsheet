@@ -35,7 +35,7 @@ setCellState id' str' ss'
                   overSH ss' $ cyclicErrorSet id'
   where
     legalSet :: CellID -> Cell -> Gr Cell Int -> Gr Cell Int
-    legalSet id (Val (Str "")) sh = lookupNodeThen id (changeNodeLab $ Val $ Str "") (error "node does not exist!") sh
+    legalSet id (Val (Str "")) sh = lookupNodeThen id (changeNodeLab $ Val EmptyCell) (error "node does not exist!") sh
      -- | null oldRefs = delNode id sh
      -- | otherwise = lookupNodeThen id (changeNodeLab $ Val $ Str "") (error "node does not exist!") sh
     legalSet _ _ _ = ssN^.sheet
@@ -123,4 +123,5 @@ getCellCode id ss = case lab (ss^.sheet) id of
 showCell' :: Cell' -> String
 showCell' (Str str) = str
 showCell' (Number num) = show num
+showCell' EmptyCell = ""
 

@@ -12,6 +12,7 @@ import Spreadsheet.Types
 -- cell representation of user giver string
 -- an error may only occur when head str == '='
 rep :: String -> Cell
+rep "" = Val EmptyCell
 rep str = case parse (cellP str') "" str' of
   Right cell -> cell
   Left  err  -> For $ Formula str (Left FNoParse) Nothing

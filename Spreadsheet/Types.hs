@@ -22,7 +22,7 @@ data GenError = GenListType | GenMissingDep | GenEmptyCell
 data EvalError = EGhciError [String] | ETimeoutError
   deriving (Eq, Show)
 
-data Cell' = Str String | Number Double
+data Cell' = Str String | Number Double | EmptyCell
   deriving (Eq, Show, Generic)
 
 -- I need to come up with a better name lol

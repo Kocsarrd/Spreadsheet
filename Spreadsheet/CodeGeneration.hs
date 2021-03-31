@@ -29,6 +29,7 @@ codeG (xs,ys) = (map go xs, map go2 ys)
 
 -- generate code for cells that do not depend on the changed cell
 cacheG :: Cell -> String
+cacheG (Val EmptyCell) = "Nothing"
 cacheG (Val (Str str)) = '"' : str ++ "\""
 cacheG (Val (Number num)) = trimmed
   where
