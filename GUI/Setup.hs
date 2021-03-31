@@ -274,26 +274,30 @@ evalAndSet id = do
   ss <- lift $ readIORef ssR
   eData <- asks evalControl
   case CG.generateCode ss id of
-    Left err -> lift $ putStrLn $ show err
-    Right (xs,ys) -> lift $ do
-      mapM_ putStrLn xs
-      mapM_ (\(c,i) -> putStrLn $ show i ++ ' ' : c) ys
-  case generateCode ss id of
     Left GenEmptyCell -> pure ()
     Left GenMissingDep ->  logAppendText "can't evaluate: missing dependencies"
     Left GenListType -> logAppendText "can't evaluate: list type error"
-    Right (code,ids) -> unless (code == "()") $ do
-      --lift $ putStrLn code -- !! debug line
-      result <- withReaderT evalControl $ execGhciCommand (code,ids)
-      case result of
-        Right res -> lift $ forM_ res
-                                (\(i,c) -> modifyIORef' ssR $ cacheCell i $ Right c)
-        Left err -> do
-          lift $ forM_ ids (\id -> modifyIORef' ssR $ cacheCell id $ Left err)
-          logAppendText $ show result
+    Right (xs,ys) -> do
+      -- 2 debug lines
+      lift $ mapM_ putStrLn xs
+      lift $ mapM_ (\(c,i) -> putStrLn $ show i ++ ' ' : c) ys
+      unless (null ys) $ do
+        withReaderT evalControl $ do
+          -- needed to clear bindings
+          loadModules
+          mapM_ execGhciQuery xs
+          results <- mapM evalOne ys
+          lift $ putStrLn $ show results
+          lift $ forM_ results $ \(r,i) -> modifyIORef' ssR $ cacheCell i r
   fileR <- askFile 
   lift $ modifyIORef' fileR $ fmap (setStatus Modified)
-  
+  where
+    evalOne (c,i) = do
+      res <- execGhciCommand c
+      case res of
+        Left err -> pure $ (Left err,i)
+        Right _ -> (\x->(x,i)) <$> execGhciCommand ('v' : show i)
+      
 -- this should support keeping the log shorter than a max number of lines
 logAppendText :: String -> ReaderT Env IO ()
 logAppendText str = do

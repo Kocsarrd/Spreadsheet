@@ -16,15 +16,14 @@ import Text.Parsec.String
 import GUI.Types
 import Spreadsheet.Types
 
-execGhciCommand :: (String,[CellID]) -> ReaderT EvalControl IO (Either EvalError [(CellID,String)])
-execGhciCommand (code,ids) = do
+execGhciCommand :: String -> ReaderT EvalControl IO (Either EvalError String)
+execGhciCommand code = do
   result <- execG code
-  pure $ either Left (getResult ids) result
+  pure $ either Left getResult result
 
+-- this is deprecated, only kept for historic reasons
 execGhciQuery :: String -> ReaderT EvalControl IO (Either EvalError String)
-execGhciQuery str = do
-  result <- execGhciCommand (str, [0])
-  pure $ snd . head <$> result
+execGhciQuery = execGhciCommand
 
 execG :: String -> ReaderT EvalControl IO (Either EvalError [String])
 execG command = do
@@ -51,7 +50,7 @@ loadModules = do
   EvalConfig ms ps <- lift $ readMVar configR
   let pathCommands = map ((++) ":set -i") ps
   let loadCommands = map ((++) "import ") ms ++ map ((++) ":l ") ms
-  --execG ":m"
+  execG ":l"
   mapM_ execG $ pathCommands ++ loadCommands
   
 createGhci :: IO Ghci
@@ -60,13 +59,7 @@ createGhci = do
   pure ghci
 
 -- converts result of evaluation to list of results
-getResult :: [CellID] -> [String] -> Either EvalError [(CellID, String)]
-getResult ids [str] = case parse resultP "" str of
-                        Left _ -> error "result parser error"
-                        Right res -> Right $ zip ids res
-getResult _ xs = Left $ EGhciError xs
-
-resultP :: Parser [String]
-resultP = between (char '(') (char ')') p <|> (pure <$> many anyChar)
-  where
-    p = many (noneOf "),") `sepBy` char ','
+getResult :: [String] -> Either EvalError String
+getResult [] = Right ""
+getResult [str] = Right str
+getResult xs = Left $ EGhciError xs
