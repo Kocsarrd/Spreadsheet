@@ -18,7 +18,6 @@ import Eval.CommandLine
 import Eval.Ghci
 import Persistence
 import Spreadsheet.CodeGeneration
-import qualified Spreadsheet.CodeGeneration2 as CG
 import Spreadsheet.Types
 import Spreadsheet.Interface
 import Spreadsheet.Parser
@@ -273,7 +272,7 @@ evalAndSet id = do
   l <- asksGui log
   ss <- lift $ readIORef ssR
   eData <- asks evalControl
-  case CG.generateCode ss id of
+  case generateCode ss id of
     Left GenEmptyCell -> pure ()
     Left GenMissingDep ->  logAppendText "can't evaluate: missing dependencies"
     Left GenListType -> logAppendText "can't evaluate: list type error"

@@ -1,31 +1,32 @@
 module Spreadsheet.CodeGeneration (generateCode, GenError(..)) where
 
-import Data.Graph.Inductive (lab,pre)
+import Data.Graph.Inductive
 import Data.Graph.Inductive.PatriciaTree (Gr) 
-import Data.Graph.Inductive.Query (bfs)
-import Data.List (intercalate, nub, (\\))
+import Data.Graph.Inductive.Query
+import Data.List (intercalate, nub, (\\), sortBy)
 import Data.List.Split (splitOn)
+import Data.Ord (comparing)
 import Data.Maybe (fromJust)
-import Lens.Micro ((^.))
+import Lens.Micro
+
+import GraphFunctions
 import Spreadsheet.Types
-import System.IO.Unsafe
 
 -- generate code from given data
 -- list type check is not yet handled
 -- if id has parse error, GenMissingDep is not informative
 -- evaluation can also be called for an id not in the graph (this is not nice imo)
-generateCode :: Spreadsheet -> CellID -> Either GenError (String,[CellID])
+generateCode :: Spreadsheet -> CellID -> Either GenError ([String],[(String,CellID)])
 generateCode sh id = maybe (Left GenMissingDep) (Right . codeG) $ depList (sh^.sheet) id
-  
+
 -- generate code for a list of cells
 -- it is assumed that a cell only depends on cells that precede it in the list
-codeG :: ([(Cell,CellID)],[(Cell,CellID)]) -> (String,[CellID])
-codeG (xs,ys) = (foldr go1 "" xs ++ foldr go2 "" ys ++ final , map snd ys)
+codeG :: ([(Cell,CellID)],[(Cell,CellID)]) -> ([String],[(String,CellID)])
+codeG (xs,ys) = (map go xs, map go2 ys)
   where
-    go1 (cell, id) acc = ("let " ++ 'v' : show id ++ " = " ++ cacheG cell ++ " in ") ++ acc
-    go2 (cell,id) acc = ("let " ++ 'v' : show id ++ " = " ++ cellG cell ++ " in ") ++ acc
-    final = '(' : (intercalate "," $ map (('v':) . show . snd) ys) ++ ")"
-  
+    go (x,id) = 'v' : show id ++ " = " ++ cacheG x
+    go2 (y,id) = ('v' : show id ++ " = " ++ cellG y,id)
+
 -- generate code for cells that do not depend on the changed cell
 cacheG :: Cell -> String
 cacheG (Val (Str str)) = '"' : str ++ "\""
@@ -59,7 +60,7 @@ depList sh id = if ok then Just (lOuterDeps, lDependOnId) else Nothing
     lOuterDeps = map (\i -> (fromJust (lab sh i), i)) outerDeps
     lDependOnId = map (\i -> (fromJust (lab sh i), i)) dependOnId  
     outerDeps' = nub (dependOnId >>= pre sh) \\ dependOnId
-    dependOnId' = bfs id sh
+    dependOnId' = map fst $ sortBy (comparing snd) $ lpLevel id sh
     (outerDeps,dependOnId) = case lab sh id of
                                Just (Val _) -> (id : outerDeps', tail dependOnId')
                                Just (For _) -> (outerDeps',dependOnId')

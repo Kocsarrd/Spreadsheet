@@ -52,6 +52,8 @@ loadModules = do
   let loadCommands = map ((++) "import ") ms ++ map ((++) ":l ") ms
   execG ":l"
   mapM_ execG $ pathCommands ++ loadCommands
+  -- needed for (€) operator to work
+  execGhciCommand ":l Empty.hs"
   
 createGhci :: IO Ghci
 createGhci = do
