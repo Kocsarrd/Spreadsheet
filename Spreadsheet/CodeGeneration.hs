@@ -31,7 +31,7 @@ codeG (xs,ys) = (map go xs, map go2 ys)
 cacheG :: Cell -> String
 cacheG (Val EmptyCell) = "Nothing"
 cacheG (Val (Str str)) = "Just " ++ '"' : str ++ "\""
-cacheG (Val (Number num)) = "Just " ++ trimmed
+cacheG (Val (Number num)) = "Just " ++ '(' : trimmed ++ ")"
   where
     trimmed = if decimal == "0" then integer else numS
     [integer,decimal] = splitOn "." numS
@@ -41,10 +41,10 @@ cacheG _ = error "cacheG: cell cache was empty"
 
 -- generate code for cells that depend on the changed cell
 cellG :: Cell -> String
-cellG (For (Formula _ _ (Just pieces))) = foldr go "" pieces
+cellG (For (Formula _ _ (Just pieces))) = "Just $ " ++ foldr go "" pieces
   where
     go (Code code) acc = code ++ acc
-    go (Refs [id]) acc = "Just " ++ 'v' : show id ++ acc
+    go (Refs [id]) acc = "fromJust " ++ 'v' : show id ++ acc
     go (Refs ids)  acc = '[' : (intercalate "," $ map (\id -> 'v' : show id) ids) ++ "]"
 cellG (For _) = error "cellG: cell was not ready"
 cellG _ = error "cellG: cell was not a formula"

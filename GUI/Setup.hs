@@ -295,7 +295,7 @@ evalAndSet id = do
       res <- execGhciCommand c
       case res of
         Left err -> pure $ (Left err,i)
-        Right _ -> (\x->(x,i)) <$> execGhciCommand ('v' : show i)
+        Right _ -> (\x->(x,i)) <$> execGhciCommand ("fromJust " ++ 'v' : show i)
       
 -- this should support keeping the log shorter than a max number of lines
 logAppendText :: String -> ReaderT Env IO ()
