@@ -6,7 +6,7 @@ import Language.Haskell.Ghcid
 import System.Process
 import System.Timeout
 
-import GUI.Types
+import App.Types
 
 -- thread to evaluate expressions in ghci
 evalMain :: EvalControl -> IO ()

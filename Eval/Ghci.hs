@@ -13,7 +13,7 @@ import Text.Parsec
 import Text.Parsec.Char
 import Text.Parsec.String
 
-import GUI.Types
+import App.Types
 import Spreadsheet.Types
 
 execGhciCommand :: String -> ReaderT EvalControl IO (Either EvalError String)

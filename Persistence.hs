@@ -4,7 +4,7 @@ import qualified Data.ByteString as BS (writeFile, readFile)
 import Data.Serialize
 import System.Directory
 
-import GUI.Types (EvalConfig(..))
+import App.Types (EvalConfig(..))
 
 saveSheet :: Serialize a => String -> a -> IO ()
 saveSheet fname ss = BS.writeFile fname ssSerialized where

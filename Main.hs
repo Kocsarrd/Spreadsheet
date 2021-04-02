@@ -1,6 +1,6 @@
 module Main where
 
-import GUI.RunApp
+import App.RunApp
 
 main :: IO ()
 main = appMain  
