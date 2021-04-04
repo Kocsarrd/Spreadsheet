@@ -8,12 +8,14 @@ import System.Timeout
 
 import App.Types
 
+timeoutSecs = 1000000
+
 -- thread to evaluate expressions in ghci
 evalMain :: EvalControl -> IO ()
 evalMain (EvalControl ghciR commandR resultR _) = forever $ do
   command <- takeMVar commandR
   ghci <- readMVar ghciR
-  mResult <- timeout 1000000 $ exec ghci command
+  mResult <- timeout timeoutSecs $ exec ghci command
   case mResult of
     Nothing -> do
       let handle = process ghci
