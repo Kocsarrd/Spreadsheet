@@ -1,4 +1,4 @@
-module App.Setup.Setup (setupGui) where
+module App.Setup (setupGui) where
 
 import Control.Monad.Reader
 

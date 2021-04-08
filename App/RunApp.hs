@@ -7,7 +7,7 @@ import Language.Haskell.Ghcid
 
 import Eval.Ghci (loadModules)
 import App.CreateEnv
-import App.Setup.Setup
+import App.Setup
 import App.Types
 import Persistence
 
