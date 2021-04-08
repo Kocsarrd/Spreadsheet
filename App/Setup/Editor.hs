@@ -13,12 +13,13 @@ setupEditor :: ReaderT Env IO ()
 setupEditor = do
   ed <- asksGui editor
   env <- ask
-  lift $ onFocusOut ed (\e -> runReaderT (editorLosesFocus e) env)
-  lift $ onFocusIn ed (\e -> runReaderT (editorGetsFocus e) env)
+  lift $ onFocusOut ed (\e -> runReaderT editorLosesFocus env)
+  lift $ onEntryActivate ed $ void $ runReaderT editorLosesFocus env
+  lift $ onFocusIn ed (\e -> runReaderT editorGetsFocus env)
   pure ()
 
-editorGetsFocus :: Event -> ReaderT Env IO Bool
-editorGetsFocus _ = do
+editorGetsFocus :: ReaderT Env IO Bool
+editorGetsFocus = do
   ss <- askState >>= liftIO . readIORef
   ed <- asksGui editor
   lift $ do
@@ -27,8 +28,8 @@ editorGetsFocus _ = do
       Just key -> entrySetText ed (getCellCode key ss)
   pure False
 
-editorLosesFocus :: Event -> ReaderT Env IO Bool
-editorLosesFocus e = do
+editorLosesFocus :: ReaderT Env IO Bool
+editorLosesFocus = do
   ssR <- askState
   ed <- asksGui editor
   ss <- lift $ readIORef ssR
