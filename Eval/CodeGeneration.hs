@@ -1,4 +1,4 @@
-module Spreadsheet.CodeGeneration (generateCode, GenError(..)) where
+module Eval.CodeGeneration (generateCode, GenError(..)) where
 
 import Data.Graph.Inductive
 import Data.Graph.Inductive.PatriciaTree (Gr) 

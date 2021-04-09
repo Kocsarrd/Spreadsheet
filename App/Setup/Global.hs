@@ -9,8 +9,8 @@ import Graphics.UI.Gtk.Gdk.Events
 import Prelude hiding (log)
 
 import App.Types
+import Eval.CodeGeneration
 import Eval.Ghci
-import Spreadsheet.CodeGeneration
 import Spreadsheet.Types
 import Spreadsheet.Interface
 
