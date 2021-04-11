@@ -57,22 +57,3 @@ refPairsP = do
     letterToNum c = fromEnum c - 65
     (x1,y1) `shift` (x2,y2) = (x1+x2,y1+y2)
   
-{-
-refsP :: Parser ForPiece
-refsP = fmap Refs $ char '§' *> (try listRef <|> singleRef) <* char '§'
-  where
-    singleRef = ref <&> fromEnum <&> pure
-    listRef = do
-      (r1,c1) <- ref
-      char ':'
-      (r2,c2) <- ref
-      return [fromEnum (r,c) | r <- [r1..r2], c <- [c1..c2]]
-    ref = do
-      n <- letter <&> toUpper <&> letterToNum
-      m <- cellNum
-      return $ (n,m)
-    cellNum :: Parser Int
-    cellNum = read <$> many1 digit
-    letterToNum c = fromEnum c - 65
-
--}
