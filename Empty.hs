@@ -17,6 +17,9 @@ type NLFun a b = Num a => [Maybe a] -> b
 
 getFromJusts = map fromJust . filter isJust
 
+onJusts :: ([a] -> b) -> LFun a b
+onJusts f = f . map fromJust . filter isJust
+
 -- re-exports from Prelude
 -- this is purely boilerplate
 -- type signatures need to be given explicitly
@@ -37,10 +40,10 @@ sumD :: NLFun a a
 sumD = sum € 0
 
 productD :: NLFun a a
-productD = product € 0
+productD = product € 1
 
-notElemD :: Eq a => NLFun a Bool
-notElemD = undefined
+notElemD :: Eq a => a -> LFun a Bool
+notElemD = notElem . Just
 
 headD :: LFun a a
 headD = head € error "headD: element is invalid"
@@ -64,7 +67,7 @@ allD :: (a -> Bool) -> LFun a Bool
 allD p = all (maybe False p)
 
 -- other functions
-count :: (Maybe a -> Bool) -> NLFun a Int 
+count :: (a -> Bool) -> [a] -> Int 
 count p = foldr (\x -> if p x then (+1) else id) 0
 
 countD :: (a -> Bool) -> NLFun a Int
