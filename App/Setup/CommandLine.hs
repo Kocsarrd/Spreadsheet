@@ -40,10 +40,12 @@ commandLineActivated = do
       let codes = map (flip getCellCode ss . fst) ps
       lift $ mapM_ (modifyIORef' ssR . uncurry setCellState) $ zip (map snd ps) codes
       lift $ mapM_ (modifyIORef' ssR . flip setCellState "") $ map fst ps
+      mapM_ evalAndSet $ map fst ps ++ map snd ps
       updateView
     Just (ClCp ps) -> do
       let codes = map (flip getCellCode ss . fst) ps
       lift $ mapM_ (modifyIORef' ssR . uncurry setCellState) $ zip (map snd ps) codes
+      mapM_ evalAndSet $ map snd ps
       updateView
     _ -> logAppendText $ "unknown command: " ++ command
     
