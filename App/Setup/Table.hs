@@ -19,7 +19,8 @@ setupTable = do
   env <- ask
   lift $ forM_ ek $ \(entry,mn) -> do
     onFocusIn entry $ (\e -> runReaderT (cellGetsFocus mn e) env)
-    onFocusOut entry $ (\e -> runReaderT (cellLosesFocus entry mn e) env)
+    onFocusOut entry $ (\e -> runReaderT (cellLosesFocus entry mn) env)
+    void $ onEntryActivate entry $ void $ runReaderT (cellLosesFocus entry mn) env
 
 cellGetsFocus :: (Int, Int) -> Event -> ReaderT Env IO Bool
 cellGetsFocus key _ = do
@@ -33,8 +34,8 @@ cellGetsFocus key _ = do
     --putStrLn $ "on get: " ++ show ss
     pure False
 
-cellLosesFocus :: Entry -> (Int,Int) -> Event -> ReaderT Env IO Bool
-cellLosesFocus entry key _ = do
+cellLosesFocus :: Entry -> (Int,Int) -> ReaderT Env IO Bool
+cellLosesFocus entry key  = do
   ssR <- askState
   lift $ do
     ss <- readIORef ssR
