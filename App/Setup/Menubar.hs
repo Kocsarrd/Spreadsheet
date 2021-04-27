@@ -78,6 +78,7 @@ saveAction = do
     Just (File fp Modified) -> do
       ss <- askState >>= liftIO . readIORef
       lift $ saveSheet fp ss
+      lift $ putStrLn "lolcsi"
     _ -> pure ()
   
 saveNewFile :: ReaderT Env IO ()
