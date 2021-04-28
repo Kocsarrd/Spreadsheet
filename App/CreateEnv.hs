@@ -49,7 +49,7 @@ createGui = do
     label <- labelNew $ Just ""
     labelSetMarkup label $ "<span foreground=\"white\" weight=\"bold\" >" ++ show n ++ "</span>"
     tableAttach table label (n+1) (n+2) 0 1 [Fill] [] 0 0
-  forM_ (take 20 $ zip [0..] ['A'..]) $ \(n,c) -> do
+  forM_ (take (sizeY+1) $ zip [0..] ['A'..]) $ \(n,c) -> do
     label <- labelNew $ Just ""
     labelSetMarkup label $ "<span foreground=\"white\" weight=\"bold\" >" ++ pure c ++ "</span>"
     tableAttach table label 0 1 (n+1) (n+2) [Fill] [] 0 0
@@ -59,6 +59,10 @@ createGui = do
       entrySetWidthChars entry 10
       tableAttach table entry (n+1) (n+2) (m+1) (m+2) [Fill] [] 0 0
       return (entry, (m,n))
+  tableWindow <- scrolledWindowNew Nothing Nothing
+  set tableWindow [ scrolledWindowHscrollbarPolicy := PolicyAutomatic
+                  , scrolledWindowVscrollbarPolicy := PolicyAutomatic]
+  scrolledWindowAddWithViewport tableWindow table
   editor <- entryNew
   commandLine <- entryNew
   menu <- hButtonBoxNew
@@ -75,8 +79,8 @@ createGui = do
   boxPackStart menu pathsButton PackNatural 0
   boxPackStart vbox menu PackNatural 0
   boxPackStart vbox editor PackNatural 0
-  boxPackStart vbox table PackGrow 0
-  boxPackStart vbox logWindow PackGrow 0
+  boxPackStart vbox tableWindow PackGrow 0
+  boxPackStart vbox logWindow PackNatural 0
   boxPackStart vbox commandLine PackNatural 0
   pure $ Gui mainWindow logWindow buffer table entryKeys editor commandLine
            (Menubar newButton saveButton loadButton modulesButton pathsButton)

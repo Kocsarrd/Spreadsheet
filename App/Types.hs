@@ -16,8 +16,8 @@ import Spreadsheet.Types (Spreadsheet)
 
 -- hardcode alert
 sizeX, sizeY :: Int
-sizeX = 15
-sizeY = 19
+sizeX = 40
+sizeY = 100
 
 -- types for global state
 
