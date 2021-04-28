@@ -63,6 +63,9 @@ createGui = do
   set tableWindow [ scrolledWindowHscrollbarPolicy := PolicyAutomatic
                   , scrolledWindowVscrollbarPolicy := PolicyAutomatic]
   scrolledWindowAddWithViewport tableWindow table
+  vpaned <- vPanedNew
+  panedAdd1 vpaned tableWindow
+  panedAdd2 vpaned logWindow
   editor <- entryNew
   commandLine <- entryNew
   menu <- hButtonBoxNew
@@ -79,8 +82,9 @@ createGui = do
   boxPackStart menu pathsButton PackNatural 0
   boxPackStart vbox menu PackNatural 0
   boxPackStart vbox editor PackNatural 0
-  boxPackStart vbox tableWindow PackGrow 0
-  boxPackStart vbox logWindow PackNatural 0
+  --boxPackStart vbox tableWindow PackGrow 0 --
+  --boxPackStart vbox logWindow PackNatural 0 --
+  boxPackStart vbox vpaned PackGrow 0
   boxPackStart vbox commandLine PackNatural 0
   pure $ Gui mainWindow logWindow buffer table entryKeys editor commandLine
            (Menubar newButton saveButton loadButton modulesButton pathsButton)
