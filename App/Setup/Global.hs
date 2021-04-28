@@ -72,8 +72,8 @@ updateView = do
   ek <- asksGui entryKeys
   ss <- askState >>= liftIO . readIORef
   l <- asksGui log
-  lift $ forM_ ek $ \(e,k) ->
-    entrySetText e $ getCellText (fromEnum k) ss
+  lift $ forM_ ek $ \(e,(k1,k2)) ->
+    entrySetText e $ getCellText (fromEnum (k2,k1)) ss
   logAppendText $ getLogMessage ss
 
 setTitle :: String -> ReaderT Env IO ()

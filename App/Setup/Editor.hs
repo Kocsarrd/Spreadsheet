@@ -37,7 +37,7 @@ editorLosesFocus = do
   case getSelected ss of
     Nothing -> pure ()
     Just key -> lift (unless (newText == getCellText key ss) $
-                         modifyIORef' ssR $ setCellState key newText) >>
-                evalAndSet key
+                      modifyIORef' ssR $ setCellState key newText) >> evalAndSet key
   updateView
   pure False
+  

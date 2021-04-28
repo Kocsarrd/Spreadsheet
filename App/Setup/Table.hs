@@ -23,26 +23,26 @@ setupTable = do
     void $ onEntryActivate entry $ void $ runReaderT (cellLosesFocus entry mn) env
 
 cellGetsFocus :: (Int, Int) -> Event -> ReaderT Env IO Bool
-cellGetsFocus key _ = do
+cellGetsFocus (k1,k2) _ = do
   ssR <- askState
   ed <- asksGui editor
   lift $ do
-    modifyIORef' ssR $ setSelected (fromEnum key)
+    modifyIORef' ssR $ setSelected (fromEnum (k2,k1))
     ss <- readIORef ssR
-    entrySetText ed (getCellCode (fromEnum key) ss)
+    entrySetText ed (getCellCode (fromEnum (k2,k1)) ss)
     --debug:
     --putStrLn $ "on get: " ++ show ss
     pure False
 
 cellLosesFocus :: Entry -> (Int,Int) -> ReaderT Env IO Bool
-cellLosesFocus entry key  = do
+cellLosesFocus entry (k1,k2)  = do
   ssR <- askState
   lift $ do
     ss <- readIORef ssR
     entryText <- entryGetText entry
-    unless (entryText == getCellText (fromEnum key) ss) $
-      modifyIORef' ssR $ setCellState (fromEnum key) entryText
-  evalAndSet (fromEnum key)
+    unless (entryText == getCellText (fromEnum (k2,k1)) ss) $
+      modifyIORef' ssR $ setCellState (fromEnum (k2,k1)) entryText
+  evalAndSet (fromEnum (k2,k1))
   updateView
   pure False
 

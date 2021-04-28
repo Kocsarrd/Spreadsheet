@@ -45,13 +45,13 @@ createGui = do
                 , scrolledWindowHscrollbarPolicy := PolicyNever]
   buffer <- textViewGetBuffer log
   table <- tableNew (sizeY+2) (sizeX+1) True
-  forM_ [0..sizeX] $ \n -> do
-    label <- labelNew $ Just ""
-    labelSetMarkup label $ "<span foreground=\"white\" weight=\"bold\" >" ++ show n ++ "</span>"
-    tableAttach table label (n+1) (n+2) 0 1 [Fill] [] 0 0
-  forM_ (take (sizeY+1) $ zip [0..] ['A'..]) $ \(n,c) -> do
+  forM_ (take (sizeX+1) $ zip [0..] ['A'..]) $ \(n,c) -> do
     label <- labelNew $ Just ""
     labelSetMarkup label $ "<span foreground=\"white\" weight=\"bold\" >" ++ pure c ++ "</span>"
+    tableAttach table label (n+1) (n+2) 0 1 [Fill] [] 0 0
+  forM_ [0..sizeY] $ \n -> do 
+    label <- labelNew $ Just ""
+    labelSetMarkup label $ "<span foreground=\"white\" weight=\"bold\" >" ++ show n ++ "</span>"
     tableAttach table label 0 1 (n+1) (n+2) [Fill] [] 0 0
   entryKeys <- fmap concat $ forM [0..sizeX] $
     \n -> forM [0..sizeY] $ \m -> do
