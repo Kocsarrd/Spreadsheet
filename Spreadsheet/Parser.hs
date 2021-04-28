@@ -40,7 +40,7 @@ numberP = double <&> Number <&> Val
 
 -- parse a formula
 formulaP :: String -> Parser Cell
-formulaP str = char '=' *> (Just <$> many1 (refsP <|> codeP)) <&> Formula str (Left FNoCache) <&> For
+formulaP str = spaces *> char '=' *> (Just <$> many1 (refsP <|> codeP)) <&> Formula str (Left FNoCache) <&> For
 
 -- parse Code (ForPiece)
 codeP :: Parser ForPiece
