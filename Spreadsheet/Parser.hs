@@ -28,9 +28,9 @@ cellP str = spaces *> (try numberP
 
 -- parse a numeric value
 numberP :: Parser Cell
-numberP = (double2 <|> try double <|> double1) <&> Number <&> Val
+numberP = (double2 <|> try double <|> double1) <* spaces <* notFollowedBy anyChar <&> Number <&> Val
   where
-    double = fmap rd $ liftA2 (++) integer decimal <* spaces <* notFollowedBy anyChar
+    double = fmap rd $ liftA2 (++) integer decimal 
     double1 = fmap rd $ integer <* char '.'
     double2 = fmap (rd . (:) '0')  $ liftA2 (:) (char '.') digits
     rd = read :: String -> Double
