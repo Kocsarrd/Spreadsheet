@@ -30,14 +30,18 @@ import Spreadsheet.Parser
 -- log messages don't handle parse errors
 setCellState :: CellID -> String -> Spreadsheet -> Spreadsheet
 setCellState id' str' ss'
-  | isLegal id' newRefs ssB' = set logMessage (Just $ "update successful: " ++ toCellName id') $ overSH ssN $ legalSet id' cell' 
+  | isLegal id' newRefs ssB' = set logMessage (Just $ "update successful: " ++ toCellName id') $
+                                 overSH ssN $ legalSet id' cell' 
   | otherwise = set logMessage (Just $ "cyclic reference - update failed: " ++ toCellName id') $
                   overSH ss' $ cyclicErrorSet id'
   where
     legalSet :: CellID -> Cell -> Gr Cell Int -> Gr Cell Int
-    legalSet id (Val (Str "")) sh = lookupNodeThen id (changeNodeLab $ Val EmptyCell) (error "node does not exist!") sh
-     -- | null oldRefs = delNode id sh
-     -- | otherwise = lookupNodeThen id (changeNodeLab $ Val $ Str "") (error "node does not exist!") sh
+    legalSet id (Val EmptyCell) sh 
+      | null (suc sh id) = foldr (\i sh' -> if outdeg sh' i == 0 && lab sh' i == Just (Val EmptyCell)
+                                              then delNode i sh'
+                                              else sh')
+                           (delNode id sh) $ oldRefs
+      | otherwise = lookupNodeThen id (changeNodeLab $ Val $ EmptyCell) (error "node does not exist!") sh
     legalSet _ _ _ = ssN^.sheet
     oldRefs = pre (ss'^.sheet) id'
     ssB = overSH ss' $ delEdges (zip oldRefs $ repeat id')
@@ -48,7 +52,8 @@ setCellState id' str' ss'
     newRefs = references cell'
     cell' = rep str'
     cyclicErrorSet :: CellID -> Gr Cell Int -> Gr Cell Int
-    cyclicErrorSet id sh = lookupNodeThen id (changeNodeLab cyclicRefError) (const $ insNode (id,cyclicRefError) sh) sh
+    cyclicErrorSet id sh = lookupNodeThen id (changeNodeLab cyclicRefError)
+      (const $ insNode (id,cyclicRefError) sh) sh
     cyclicRefError = For $ Formula str' (Left FCycleRefError) Nothing 
 
 ------------------------------

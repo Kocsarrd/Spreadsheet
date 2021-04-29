@@ -12,7 +12,8 @@ runSpreadsheetInterfaceTests = do
   putStrLn "-----------------------------------"
   putStrLn "Spreadsheet.Interface -- setCellState function"
   putStrLn ""
-  mapM_ testRunner [setSimple, refsNoCycle, tryCycle1, tryCycle2, tryCycle4]
+  mapM_ testRunner [ setSimple, refsNoCycle, tryCycle1, tryCycle2, tryCycle4
+                   , makeEmptyNoRef, makeEmptyIsReffed]
   putStrLn "-----------------------------------"
 
 setSimple :: TestCase
@@ -85,7 +86,7 @@ tryCycle2 = ("tryCycle2",
             )
 
 tryCycle4 :: TestCase
-tryCycle4 = ("tryCycle2",
+tryCycle4 = ("tryCycle4",
              [ ("setCellState 0 \"12\"", setCellState 0 "12", [])
              , ("setCellState 1 \"=§a0\"", setCellState 1 "=§a0§", [])
              , ("setCellState 4 \"=§b0\"", setCellState 4 "=§b0§", [])
@@ -101,6 +102,33 @@ tryCycle4 = ("tryCycle2",
                )
              ]
             )
+
+makeEmptyNoRef :: TestCase
+makeEmptyNoRef = ("makeEmptyNoRef",
+                  [ ("setCellState 0 \"12\"", setCellState 0 "12", [])
+                  , ("setCellState 0 \"\"", setCellState 0 "",
+                     [ ("graph has 0 nodes", nodeCount 0)]
+                    )
+                  , ("setCellState 1 \"=sumD §t0:t10§ + 25\"", setCellState 1 "=sumD §t0:t10§ + 25\"",[])
+                  , ("setCellState 1 \"\"", setCellState 1 "",
+                     [ ("graph has 0 nodes", nodeCount 0)
+                     , ("graph has 0 edges", edgeCount 0)
+                     ]
+                    )
+                  ]
+                 )
+
+makeEmptyIsReffed :: TestCase
+makeEmptyIsReffed = ("makeEmptyIsReffed",
+                     [ ("setCellState 0 \"12\"", setCellState 0 "12", [])
+                     , ("setCellState 1 \"=§A0§ + §D2§\"", setCellState 1 "=§A0§ + §D2§", [])
+                     , ("setCellState 0 \"\"", setCellState 0 "",
+                        [ ("graph has 3 nodes", nodeCount 3)
+                        , ("graph has 2 edges", edgeCount 2)
+                        ]
+                       )
+                     ]
+                    )
 
 type TestCase = (String, [(String, Spreadsheet -> Spreadsheet, [(String, Spreadsheet -> Bool)])])
 
