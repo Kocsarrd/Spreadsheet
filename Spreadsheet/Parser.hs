@@ -22,15 +22,17 @@ rep str = case parse (cellP str') "" str' of
     isStringLiteral _ = False
 
 cellP :: String -> Parser Cell
-cellP str = try numberP
+cellP str = spaces *> (try numberP
             <|> formulaP str
-            <|> (many anyChar <&> Str <&> Val)
+            <|> (many anyChar <&> Str <&> Val))
 
 -- parse a numeric value
 numberP :: Parser Cell
-numberP = double <&> Number <&> Val
+numberP = (double2 <|> try double <|> double1) <&> Number <&> Val
   where
-    double = fmap rd $ spaces *> liftA2 (++) integer decimal <* spaces <* notFollowedBy anyChar
+    double = fmap rd $ liftA2 (++) integer decimal <* spaces <* notFollowedBy anyChar
+    double1 = fmap rd $ integer <* char '.'
+    double2 = fmap (rd . (:) '0')  $ liftA2 (:) (char '.') digits
     rd = read :: String -> Double
     decimal  = option "" $ liftA2 (:) (char '.') digits
     digits = many1 digit
@@ -40,7 +42,7 @@ numberP = double <&> Number <&> Val
 
 -- parse a formula
 formulaP :: String -> Parser Cell
-formulaP str = spaces *> char '=' *> (Just <$> many1 (refsP <|> codeP)) <&> Formula str (Left FNoCache) <&> For
+formulaP str = char '=' *> spaces *> (Just <$> many1 (refsP <|> codeP)) <&> Formula str (Left FNoCache) <&> For
 
 -- parse Code (ForPiece)
 codeP :: Parser ForPiece
