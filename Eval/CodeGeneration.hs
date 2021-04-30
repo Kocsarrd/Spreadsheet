@@ -10,6 +10,7 @@ import Data.Maybe (fromJust)
 import Lens.Micro
 
 import GraphFunctions
+import Spreadsheet.Interface
 import Spreadsheet.Types
 
 -- generate code from given data
@@ -57,7 +58,7 @@ cellG _ = error "cellG: cell was not a formula"
 depList :: Gr Cell Int -> CellID -> Maybe ([(Cell,CellID)],[(Cell,CellID)])
 depList sh id = if ok then Just (lOuterDeps, lDependOnId) else Nothing     
   where
-    ok = not (null dependOnId') && all cached lOuterDeps && all ready lDependOnId 
+    ok = (not (null dependOnId') || isEmpty sh) && all cached lOuterDeps && all ready lDependOnId 
     lOuterDeps = map (\i -> (fromJust (lab sh i), i)) outerDeps
     lDependOnId = map (\i -> (fromJust (lab sh i), i)) dependOnId  
     outerDeps' = nub (dependOnId >>= pre sh) \\ dependOnId
@@ -68,7 +69,8 @@ depList sh id = if ok then Just (lOuterDeps, lDependOnId) else Nothing
                                _ -> ([],[])
                                
 cached :: (Cell, CellID) -> Bool
-cached (Val _ ,_) = True
+cached (Val EmptyCell ,_) = False
+cached (Val _, _) = True
 cached (For (Formula _ (Right _) _),_) = True
 cached _ = False
 

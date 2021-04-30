@@ -1,4 +1,4 @@
-module Test.Spreadsheet.Interface where
+module Test.Spreadsheet.Interface (runSpreadsheetInterfaceTests)where
 
 import Control.Monad
 import Data.Graph.Inductive.Graph
