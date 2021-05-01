@@ -1,17 +1,8 @@
-code structure:
-use better type level invariants for Formula - Spreadsheet.Types (not neccessary)
+CODE:
+- * when there are unmodified changes
+- code generation bugs: GenMissingDep for empty cell, double outer dependencies 
+- cell update log messages
+- loadModuleConfig should return IO (Maybe EvalConfig)
 
-features:
-logAppendText should limit log length - GUI.Setup
-dynamic table size - GUI
-getCellText number length is hardcoded
-list type check - CodeGeneration
-generalize cell row identifier - Parser
-get response from module loading - Eval.Evaluation
-user command line: update commands
-level-by-level cell evaluation (not neccessary)
-
-bugs:
-need better log messages - Interface, Parser, CodeGeneration
-fix "=" bug for cacheCell - Interface, Parser
-fix ghcierror for empty cell dependencies
+DOC:
+describe vpaned in user doc
