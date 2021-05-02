@@ -82,8 +82,8 @@ setTitle = do
   mw <- asksGui mainWindow
   file <- askFile >>= liftIO . readIORef
   let str = case file of
-               Just (File fname Saved) -> fname
-               Just (File fname Modified) -> '*' : fname
+               Just (File fname Saved) -> fname ++ ".fsandor"
+               Just (File fname Modified) -> '*' : fname ++ ".fsandor"
                Nothing -> "*new file"
   lift $ windowSetTitle mw str
 

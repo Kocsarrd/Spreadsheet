@@ -45,7 +45,7 @@ cellG :: Cell -> String
 cellG (For (Formula _ _ (Just pieces))) = "Just $ " ++ foldr go "" pieces
   where
     go (Code code) acc = code ++ acc
-    go (Refs [id]) acc = "fromJust " ++ 'v' : show id ++ acc
+    go (Refs [id]) acc = "(fromJust " ++ 'v' : show id ++ ')' : acc
     go (Refs ids)  acc = '[' : (intercalate "," $ map (\id -> 'v' : show id) ids) ++ "]" ++ acc
 cellG (For _) = error "cellG: cell was not ready"
 cellG _ = error "cellG: cell was not a formula"

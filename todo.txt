@@ -1,10 +1,8 @@
-CODE:
-- code generation bugs: double outer dependencies 
+CODE: 
 - cell update log messages
 - print warning if Empty could not be loaded
 
 DOC:
-- full documentation of App.Setup.Menubar
 - summary
 - add references
 - format
