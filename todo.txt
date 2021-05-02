@@ -1,8 +1,4 @@
 CODE:
-- * when there are unmodified changes
 - code generation bugs: GenMissingDep for empty cell, double outer dependencies 
 - cell update log messages
 - loadModuleConfig should return IO (Maybe EvalConfig)
-
-DOC:
-describe vpaned in user doc

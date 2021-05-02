@@ -36,7 +36,6 @@ newAction = do
     fileR <- askFile
     lift $ writeIORef ssR emptySpreadsheet
     lift $ writeIORef fileR $ Nothing
-    setTitle "*new file"
     updateView
   
 getFileChooserDialog :: FileChooserAction -> IO FileChooserDialog
@@ -65,20 +64,22 @@ loadAction = do
                                lift $ loadSheet file >>= either putStrLn (writeIORef ssR)
                                fileR <- askFile
                                lift $ writeIORef fileR $ Just $ File file Saved
-                               setTitle file
     _ -> pure ()
   lift $ widgetDestroy dialog
   updateView
 
 saveAction :: ReaderT Env IO ()
 saveAction = do
-  mFile <- askFile >>= liftIO . readIORef
+  mFileR <- askFile
+  mFile <- lift $ readIORef mFileR
   case mFile of
     Nothing -> saveNewFile
     Just (File fp Modified) -> do
       ss <- askState >>= liftIO . readIORef
       lift $ saveSheet fp ss
       lift $ putStrLn "lolcsi"
+      lift $ writeIORef mFileR $ Just $ File fp Saved
+      setTitle
     _ -> pure ()
   
 saveNewFile :: ReaderT Env IO ()
@@ -96,7 +97,7 @@ saveNewFile = do
                              fileR <- askFile
                              lift $ saveSheet (fname ++ ".fsandor") ss
                              lift $ writeIORef fileR $ Just $ File fname Saved
-                             setTitle fname
+                             setTitle
     _ -> pure ()
   lift $ widgetDestroy dialog
 

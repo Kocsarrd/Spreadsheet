@@ -75,9 +75,17 @@ updateView = do
   lift $ forM_ ek $ \(e,(k1,k2)) ->
     entrySetText e $ getCellText (fromEnum (k2,k1)) ss
   logAppendText $ getLogMessage ss
+  setTitle
 
-setTitle :: String -> ReaderT Env IO ()
-setTitle str = asksGui mainWindow >>= liftIO . flip windowSetTitle str
+setTitle :: ReaderT Env IO ()
+setTitle = do
+  mw <- asksGui mainWindow
+  file <- askFile >>= liftIO . readIORef
+  let str = case file of
+               Just (File fname Saved) -> fname
+               Just (File fname Modified) -> '*' : fname
+               Nothing -> "*new file"
+  lift $ windowSetTitle mw str
 
 -- generalize Reader action to ReaderT action
 up :: Reader r a -> ReaderT r IO a
