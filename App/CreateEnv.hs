@@ -25,8 +25,14 @@ createEvalControl :: IO EvalControl
 createEvalControl = EvalControl <$> (fst <$> startGhci "ghci" (Just ".") (\_  -> putStrLn) >>= newMVar)
                                 <*> newEmptyMVar
                                 <*> newEmptyMVar
-                                <*> (loadModuleConfig >>= newMVar)
-
+                                <*> (mc >>= newMVar)
+  where
+    mc = do
+      mMc <- loadModuleConfig
+      case mMc of
+        Nothing -> putStrLn "warning: no configuration file found" >> pure (EvalConfig [] [])
+        Just mc' -> pure mc'
+    
 -- creates the GUI layout, without adding functionality 
 createGui :: IO Gui
 createGui = do

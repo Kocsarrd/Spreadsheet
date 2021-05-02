@@ -22,11 +22,11 @@ moduleConfigFile = "modules.sanyi"
 saveModuleConfig :: EvalConfig -> IO ()
 saveModuleConfig = saveSheet moduleConfigFile
 
-loadModuleConfig :: IO EvalConfig
+loadModuleConfig :: IO (Maybe EvalConfig)
 loadModuleConfig = do
   config <- loadSheet moduleConfigFile
   case config of
-    Left _ -> pure $ EvalConfig [] []
-    Right c -> pure c
+    Left _ -> pure $ Nothing
+    Right c -> pure $ Just c
 
 

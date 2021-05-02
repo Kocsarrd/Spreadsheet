@@ -1,4 +1,5 @@
 CODE:
-- code generation bugs: GenMissingDep for empty cell, double outer dependencies 
+- code generation bugs: double outer dependencies 
 - cell update log messages
 - loadModuleConfig should return IO (Maybe EvalConfig)
+- print warning if Empty could not be loaded
