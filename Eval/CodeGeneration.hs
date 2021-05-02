@@ -69,7 +69,6 @@ depList sh id = if ok then Just (lOuterDeps, lDependOnId) else Nothing
                                _ -> ([],[])
                                
 cached :: (Cell, CellID) -> Bool
-cached (Val EmptyCell ,_) = False
 cached (Val _, _) = True
 cached (For (Formula _ (Right _) _),_) = True
 cached _ = False

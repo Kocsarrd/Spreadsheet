@@ -146,4 +146,3 @@ modulesAction mat = do
       start <- textBufferGetStartIter buff
       end <-textBufferGetEndIter buff
       textBufferGetText buff start end False
-      
