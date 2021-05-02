@@ -23,7 +23,7 @@ generateCode sh id = maybe (Left GenMissingDep) (Right . codeG) $ depList (sh^.s
 -- generate code for a list of cells
 -- it is assumed that a cell only depends on cells that precede it in the list
 codeG :: ([(Cell,CellID)],[(Cell,CellID)]) -> ([String],[(String,CellID)])
-codeG (xs,ys) = (map go xs, map go2 ys)
+codeG (xs,ys) = (nub (map go xs), map go2 ys)
   where
     go (x,id) = 'v' : show id ++ " = " ++ cacheG x
     go2 (y,id) = ('v' : show id ++ " = " ++ cellG y,id)
@@ -46,7 +46,7 @@ cellG (For (Formula _ _ (Just pieces))) = "Just $ " ++ foldr go "" pieces
   where
     go (Code code) acc = code ++ acc
     go (Refs [id]) acc = "fromJust " ++ 'v' : show id ++ acc
-    go (Refs ids)  acc = '[' : (intercalate "," $ map (\id -> 'v' : show id) ids) ++ "]"
+    go (Refs ids)  acc = '[' : (intercalate "," $ map (\id -> 'v' : show id) ids) ++ "]" ++ acc
 cellG (For _) = error "cellG: cell was not ready"
 cellG _ = error "cellG: cell was not a formula"
 

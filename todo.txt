@@ -1,5 +1,10 @@
 CODE:
 - code generation bugs: double outer dependencies 
 - cell update log messages
-- loadModuleConfig should return IO (Maybe EvalConfig)
 - print warning if Empty could not be loaded
+
+DOC:
+- full documentation of App.Setup.Menubar
+- summary
+- add references
+- format
