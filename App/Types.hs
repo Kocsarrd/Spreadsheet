@@ -21,21 +21,22 @@ sizeY = 100
 
 -- types for global state
 
-data Menubar = Menubar { newButton :: Button
-                       , saveButton :: Button
-                       , loadButton :: Button
+data Menubar = Menubar { newButton     :: Button
+                       , saveButton    :: Button
+                       , loadButton    :: Button
                        , modulesButton :: Button
-                       , pathsButton :: Button
+                       , pathsButton   :: Button
                        } deriving Eq
 
-data Gui = Gui { mainWindow  :: Window
-               , logWindow   :: ScrolledWindow
-               , log         :: TextBuffer
-               , table       :: Table
-               , entryKeys   :: [(Entry,(Int,Int))]
-               , editor      :: Entry
-               , commandLine :: Entry
-               , menu        :: Menubar
+data Gui = Gui { mainWindow     :: Window
+               , logWindow      :: ScrolledWindow
+               , log            :: TextBuffer
+               , table          :: Table
+               , entryKeys      :: [(Entry,(Int,Int))]
+               , colButtonKeys  :: [(Button, Char)]
+               , editor         :: Entry
+               , commandLine    :: Entry
+               , menu           :: Menubar
                } deriving Eq
 
 data EvalConfig = EvalConfig { modules :: [String]

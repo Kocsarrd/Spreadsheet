@@ -50,11 +50,14 @@ createGui = do
   set logWindow [ containerChild := log
                 , scrolledWindowHscrollbarPolicy := PolicyNever]
   buffer <- textViewGetBuffer log
-  table <- tableNew (sizeY+2) (sizeX+1) True
-  forM_ (take (sizeX+1) $ zip [0..] ['A'..]) $ \(n,c) -> do
+  table <- tableNew (sizeY+2) (sizeX+1) False
+  buttonKeys <- forM (take (sizeX+1) $ zip [0..] ['A'..]) $ \(n,c) -> do
     label <- labelNew $ Just ""
     labelSetMarkup label $ "<span foreground=\"white\" weight=\"bold\" >" ++ pure c ++ "</span>"
-    tableAttach table label (n+1) (n+2) 0 1 [Fill] [] 0 0
+    button <- buttonNew
+    containerAdd button label
+    tableAttach table button (n+1) (n+2) 0 1 [Fill] [] 0 0
+    return (button, c)
   forM_ [0..sizeY] $ \n -> do 
     label <- labelNew $ Just ""
     labelSetMarkup label $ "<span foreground=\"white\" weight=\"bold\" >" ++ show n ++ "</span>"
@@ -88,9 +91,7 @@ createGui = do
   boxPackStart menu pathsButton PackNatural 0
   boxPackStart vbox menu PackNatural 0
   boxPackStart vbox editor PackNatural 0
-  --boxPackStart vbox tableWindow PackGrow 0 --
-  --boxPackStart vbox logWindow PackNatural 0 --
   boxPackStart vbox vpaned PackGrow 0
   boxPackStart vbox commandLine PackNatural 0
-  pure $ Gui mainWindow logWindow buffer table entryKeys editor commandLine
+  pure $ Gui mainWindow logWindow buffer table entryKeys buttonKeys editor commandLine
            (Menubar newButton saveButton loadButton modulesButton pathsButton)
