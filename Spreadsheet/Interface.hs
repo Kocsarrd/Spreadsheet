@@ -100,7 +100,7 @@ references :: Cell -> [CellID]
 references (For (Formula _ _ (Just val))) = foldr folder [] $ val
   where
     folder (Code _) refs = refs
-    folder (Refs r) refs = r ++ refs
+    folder (Refs r) refs = map (\(r',_,_) -> r') r ++ refs
 references _ = []
 
 

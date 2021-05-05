@@ -25,8 +25,11 @@ data EvalError = EGhciError [String] | ETimeoutError
 data Cell' = Str String | Number Double | EmptyCell
   deriving (Eq, Show, Generic)
 
+data RefType = Absolute | Relative
+  deriving (Eq, Show, Generic)
+
 -- I need to come up with a better name lol
-data ForPiece = Code String | Refs [CellID]
+data ForPiece = Code String | Refs [(CellID, RefType, RefType)]
   deriving (Eq, Show, Generic)
 
 data FormulaError = FNoParse
@@ -77,6 +80,8 @@ overSH ss f = over sheet f ss
 
 instance Serialize Cell' where
 
+instance Serialize RefType where
+  
 instance Serialize ForPiece where
 
 instance Serialize FormulaError where

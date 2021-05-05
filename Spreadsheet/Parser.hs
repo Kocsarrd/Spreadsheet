@@ -53,6 +53,24 @@ codeP = fmap Code $ many1 $ satisfy (/= '§')
 refsP :: Parser ForPiece
 refsP = fmap Refs $ char '§' *> (try listRef <|> singleRef) <* char '§'
   where
+    listRef = do
+      (r1,c1,rrt,crt) <- ref
+      char ':'
+      (r2,c2,_,_) <- ref
+      pure [(fromEnum (r,c),rrt,crt) | r <- [r1..r2], c <- [c1..c2]]
+    singleRef = ref <&> (\(n,m,rt1,rt2) -> (fromEnum (n,m),rt1,rt2)) <&> pure 
+    withDollar :: Parser a -> Parser (RefType,a)
+    withDollar p = (char '$' *> p <&> (,) Absolute) <|> (p <&> (,) Relative)
+    ref = do
+      (rt1,n) <- withDollar $ letter <&> toUpper <&> letterToNum
+      (rt2,m) <- withDollar cellNum
+      pure (n,m,rt1,rt2)
+    cellNum :: Parser Int
+    cellNum = read <$> many1 digit
+    letterToNum c = fromEnum c - 65
+{-
+refsP = fmap Refs $ char '§' *> (try listRef <|> singleRef) <* char '§'
+  where
     singleRef = ref <&> fromEnum <&> pure
     listRef = do
       (r1,c1) <- ref
@@ -66,3 +84,4 @@ refsP = fmap Refs $ char '§' *> (try listRef <|> singleRef) <* char '§'
     cellNum :: Parser Int
     cellNum = read <$> many1 digit
     letterToNum c = fromEnum c - 65
+-}
