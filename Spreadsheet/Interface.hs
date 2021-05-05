@@ -55,7 +55,7 @@ setCellState id' str' ss'
     cyclicErrorSet id sh = lookupNodeThen id (changeNodeLab cyclicRefError)
       (const $ insNode (id,cyclicRefError) sh) sh
     cyclicRefError = For $ Formula str' (Left FCycleRefError) Nothing 
-
+   
 ------------------------------
 -- for caching evaluated cells
 ------------------------------

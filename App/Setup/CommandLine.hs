@@ -1,8 +1,9 @@
 module App.Setup.CommandLine (setupCommandLine) where
 
 import Control.Monad.Reader
+import Data.Char (isDigit, isLetter)
 import Data.IORef
-import Data.List (intercalate)
+import Data.List (intercalate, takeWhile, dropWhile)
 import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.Events
 
@@ -36,14 +37,14 @@ commandLineActivated = do
         Left ETimeoutError -> logAppendText $ "query timed out: " ++ command
         Right res -> logAppendText res
         Left (EGhciError errs) -> logAppendText $ intercalate "\n" errs
-    Just (ClMv ps) -> do
-      let codes = map (flip getCellCode ss . fst) ps
+    Just (ClMv (shift,ps)) -> do
+      let codes = map (shiftCode shift . flip getCellCode ss . fst) ps
       lift $ mapM_ (modifyIORef' ssR . uncurry setCellState) $ zip (map snd ps) codes
       lift $ mapM_ (modifyIORef' ssR . flip setCellState "") $ map fst ps
       mapM_ evalAndSet $ map fst ps ++ map snd ps
       updateView
-    Just (ClCp ps) -> do
-      let codes = map (flip getCellCode ss . fst) ps
+    Just (ClCp (shift,ps)) -> do
+      let codes = map (shiftCode shift . flip getCellCode ss . fst) ps
       lift $ mapM_ (modifyIORef' ssR . uncurry setCellState) $ zip (map snd ps) codes
       mapM_ evalAndSet $ map snd ps
       updateView
