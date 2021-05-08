@@ -16,13 +16,15 @@ import Text.Parsec.String
 import App.Types
 import Spreadsheet.Types
 
-execGhciCommand :: String -> ReaderT EvalControl IO (Either EvalError String)
+type Eval a = ReaderT EvalControl IO a
+
+execGhciCommand :: String -> Eval (Either EvalError String)
 execGhciCommand code = do
   result <- execG code
   pure $ either Left getResult result
 
 -- this is deprecated, only kept for historic reasons
-execGhciQuery :: String -> ReaderT EvalControl IO (Either EvalError String)
+execGhciQuery :: String -> Eval (Either EvalError String)
 execGhciQuery = execGhciCommand
 
 execG :: String -> ReaderT EvalControl IO (Either EvalError [String])
@@ -44,7 +46,7 @@ execG command = do
 -- no response if module could not be loaded
 -- sets paths and loads modules
 -- this is currently very ugly
-loadModules :: ReaderT EvalControl IO ()
+loadModules :: Eval ()
 loadModules = do
   EvalControl _ _ _ configR <- ask
   EvalConfig ms ps <- lift $ readMVar configR

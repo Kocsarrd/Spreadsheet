@@ -8,11 +8,9 @@ import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.Events
 
 import App.Setup.Global
-import App.Types
 import Eval.CommandLine
 import Eval.Ghci
 import Spreadsheet.Interface
-import Spreadsheet.Types
 
 setupCommandLine :: App ()
 setupCommandLine = do

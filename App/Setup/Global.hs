@@ -1,4 +1,11 @@
-module App.Setup.Global where
+module App.Setup.Global
+  ( evalAndSet
+  , logAppendText
+  , updateView
+  , setTitle
+  , asksGui, askState, askGhci, askFile
+  , module App.Types
+  ) where
 
 import Control.Concurrent
 import Control.Monad.Reader

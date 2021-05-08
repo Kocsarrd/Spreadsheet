@@ -1,12 +1,12 @@
 {-# LANGUAGE ViewPatterns #-}
 
 module Spreadsheet.Interface
-  (
-  emptySpreadsheet,
-  getCellText, getCellCode, setCellState,
-  cacheCell,
-  getSelected, setSelected,
-  getLogMessage
+  ( emptySpreadsheet
+  , getCellText, getCellCode, setCellState
+  , cacheCell
+  , getSelected, setSelected
+  , getLogMessage
+  , module Spreadsheet.Types
   ) where
 
 import Data.Graph.Inductive.Graph

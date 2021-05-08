@@ -8,7 +8,6 @@ import Language.Haskell.Ghcid
 
 import Eval.EvalMain
 import App.Types
-import Spreadsheet.Types
 import Spreadsheet.Interface (emptySpreadsheet)
 import Persistence
 

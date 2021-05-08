@@ -11,7 +11,6 @@ import Lens.Micro
 
 import GraphFunctions
 import Spreadsheet.Interface
-import Spreadsheet.Types
 
 -- generate code from given data
 -- list type check is not yet handled
