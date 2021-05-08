@@ -18,7 +18,7 @@ import Spreadsheet.Interface
 -- actions called by handlers
 -----------------------------
 
-evalAndSet :: CellID -> ReaderT Env IO ()
+evalAndSet :: CellID -> App ()
 evalAndSet id = do
   ssR <- askState
   g <- askGhci >>= lift . readMVar
@@ -51,7 +51,7 @@ evalAndSet id = do
         Right _ -> (\x->(x,i)) <$> execGhciCommand ("fromJust " ++ 'v' : show i)
       
 -- this should support keeping the log shorter than a max number of lines
-logAppendText :: String -> ReaderT Env IO ()
+logAppendText :: String -> App ()
 logAppendText str = do
   l <- asksGui log
   sw <- logWindow <$> asks gui
@@ -67,7 +67,7 @@ logAppendText str = do
         p <- adjustmentGetPageSize adj
         adjustmentSetValue adj (u-p)
       
-updateView :: ReaderT Env IO ()
+updateView :: App ()
 updateView = do
   ek <- asksGui entryKeys
   ss <- askState >>= liftIO . readIORef
@@ -77,7 +77,7 @@ updateView = do
   logAppendText $ getLogMessage ss
   setTitle
 
-setTitle :: ReaderT Env IO ()
+setTitle :: App ()
 setTitle = do
   mw <- asksGui mainWindow
   file <- askFile >>= liftIO . readIORef
@@ -92,7 +92,7 @@ up :: Reader r a -> ReaderT r IO a
 up = mapReaderT (pure . runIdentity)
 
 -- convinience functions to access Env
-asksGui :: Monad m => (Gui -> a) -> ReaderT Env m a
+asksGui :: (Gui -> a) -> App a
 asksGui f = f <$> asks gui
 
 askState = asks state
