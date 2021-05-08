@@ -16,7 +16,7 @@ appMain = do
   env <- createEnv
   runReaderT runApp env
 
-runApp :: ReaderT Env IO ()
+runApp :: App ()
 runApp = do
   setupGui
   mainW <- mainWindow <$> asks gui

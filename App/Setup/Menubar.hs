@@ -18,7 +18,7 @@ import Spreadsheet.Interface
 -- menubar for action buttons
 -----------------------------
 
-setupMenubar :: ReaderT Env IO ()
+setupMenubar :: App ()
 setupMenubar = do
   (Menubar new save load modules paths) <- asksGui menu
   env <- ask
@@ -28,7 +28,7 @@ setupMenubar = do
   lift $ onClicked modules $ runReaderT (modulesAction EditModules) env
   void $ lift $ onClicked paths $ runReaderT (modulesAction EditPaths) env
 
-newAction :: ReaderT Env IO ()
+newAction :: App ()
 newAction = do
   answer <- lift $ runAreYouSureDialog
   when answer $ do
@@ -48,7 +48,7 @@ getFileChooserDialog act =  fileChooserDialogNew (Just $ title ++ " sheet") Noth
               _                     -> "Fazekas Sándor"
 
 -- need to add are you sure prompt
-loadAction :: ReaderT Env IO ()
+loadAction :: App ()
 loadAction = do
   ssR  <- askState
   dialog <- lift $ getFileChooserDialog FileChooserActionOpen
@@ -68,7 +68,7 @@ loadAction = do
   lift $ widgetDestroy dialog
   updateView
 
-saveAction :: ReaderT Env IO ()
+saveAction :: App ()
 saveAction = do
   mFileR <- askFile
   mFile <- lift $ readIORef mFileR
@@ -82,7 +82,7 @@ saveAction = do
       setTitle
     _ -> pure ()
   
-saveNewFile :: ReaderT Env IO ()
+saveNewFile :: App ()
 saveNewFile = do
   ss <- askState >>= liftIO . readIORef
   dialog <- lift $ getFileChooserDialog FileChooserActionSave
@@ -122,7 +122,7 @@ getModulesDialog buffer = do
   pure dialog
 
 -- does not unload any modules
-modulesAction :: ModuleActionType -> ReaderT Env IO ()
+modulesAction :: ModuleActionType -> App ()
 modulesAction mat = do
   configR <- eConfig <$> asks evalControl 
   lift $ do

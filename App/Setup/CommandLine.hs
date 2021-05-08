@@ -14,7 +14,7 @@ import Eval.Ghci
 import Spreadsheet.Interface
 import Spreadsheet.Types
 
-setupCommandLine :: ReaderT Env IO ()
+setupCommandLine :: App ()
 setupCommandLine = do
   cl <- asksGui commandLine
   env <- ask
@@ -23,7 +23,7 @@ setupCommandLine = do
 
 -- this is a bit ugly, exec should give back EGhciError
 -- after cp and mv, evaluation does not happen yet
-commandLineActivated :: ReaderT Env IO ()
+commandLineActivated :: App ()
 commandLineActivated = do
   cl <- asksGui commandLine
   ssR <- askState

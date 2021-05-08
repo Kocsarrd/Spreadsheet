@@ -14,7 +14,7 @@ import Spreadsheet.Interface
 -- table showing the sheet content
 ----------------------------------
 
-setupTable :: ReaderT Env IO ()
+setupTable :: App ()
 setupTable = do
   ek <- asksGui entryKeys
   env <- ask
@@ -27,7 +27,7 @@ setupTable = do
     onClicked button $ runReaderT (colButtonClicked c) env
     
 
-cellGetsFocus :: (Int, Int) -> Event -> ReaderT Env IO Bool
+cellGetsFocus :: (Int, Int) -> Event -> App Bool
 cellGetsFocus (k1,k2) _ = do
   ssR <- askState
   ed <- asksGui editor
@@ -39,7 +39,7 @@ cellGetsFocus (k1,k2) _ = do
     --putStrLn $ "on get: " ++ show ss
     pure False
 
-cellLosesFocus :: Entry -> (Int,Int) -> ReaderT Env IO Bool
+cellLosesFocus :: Entry -> (Int,Int) -> App Bool
 cellLosesFocus entry (k1,k2)  = do
   ssR <- askState
   lift $ do
@@ -53,7 +53,7 @@ cellLosesFocus entry (k1,k2)  = do
 
 -- if-then-else's else case is not needed
 -- it's only a safety measure
-colButtonClicked :: Char -> ReaderT Env IO ()
+colButtonClicked :: Char -> App ()
 colButtonClicked col = do
   entries <- map fst . filter ((==fromEnum col).(+65).snd.snd) <$> asksGui entryKeys
   lift $ do

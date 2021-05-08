@@ -9,7 +9,7 @@ import App.Setup.Table
 import App.Types
 
 -- connects the GUI with the logic
-setupGui :: ReaderT Env IO ()
+setupGui :: App ()
 setupGui = do
   setupEditor
   setupCommandLine

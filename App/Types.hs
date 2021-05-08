@@ -5,6 +5,7 @@
 module App.Types where
 
 import Control.Concurrent (MVar)
+import Control.Monad.Reader (ReaderT)
 import Data.IORef (IORef)
 import Data.Serialize (Serialize)
 import GHC.Generics
@@ -68,3 +69,5 @@ data Env = Env { evalControl  :: EvalControl
                , state        :: IORef Spreadsheet
                , file         :: IORef (Maybe File)
                } deriving Eq
+
+type App a = ReaderT Env IO a

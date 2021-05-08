@@ -9,7 +9,7 @@ import App.Setup.Global
 import App.Types
 import Spreadsheet.Interface
 
-setupEditor :: ReaderT Env IO ()
+setupEditor :: App ()
 setupEditor = do
   ed <- asksGui editor
   env <- ask
@@ -18,7 +18,7 @@ setupEditor = do
   lift $ onFocusIn ed (\e -> runReaderT editorGetsFocus env)
   pure ()
 
-editorGetsFocus :: ReaderT Env IO Bool
+editorGetsFocus :: App Bool
 editorGetsFocus = do
   ss <- askState >>= liftIO . readIORef
   ed <- asksGui editor
@@ -28,7 +28,7 @@ editorGetsFocus = do
       Just key -> entrySetText ed (getCellCode key ss)
   pure False
 
-editorLosesFocus :: ReaderT Env IO Bool
+editorLosesFocus :: App Bool
 editorLosesFocus = do
   ssR <- askState
   ed <- asksGui editor
