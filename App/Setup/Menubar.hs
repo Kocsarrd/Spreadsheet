@@ -11,7 +11,6 @@ import Graphics.UI.Gtk.Gdk.Events
 import App.Setup.Global
 import Eval.Ghci
 import Persistence
-import Spreadsheet.Interface
 
 -----------------------------
 -- menubar for action buttons

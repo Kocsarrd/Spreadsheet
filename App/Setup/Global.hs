@@ -5,6 +5,7 @@ module App.Setup.Global
   , setTitle
   , asksGui, askState, askGhci, askFile
   , module App.Types
+  , module Spreadsheet.Interface
   ) where
 
 import Control.Concurrent
@@ -18,7 +19,6 @@ import Prelude hiding (log)
 import App.Types
 import Eval.CodeGeneration
 import Eval.Ghci
-import Spreadsheet.Types
 import Spreadsheet.Interface
 
 -----------------------------

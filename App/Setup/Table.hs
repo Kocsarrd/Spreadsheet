@@ -7,7 +7,6 @@ import Graphics.UI.Gtk
 import Graphics.UI.Gtk.Gdk.Events
 
 import App.Setup.Global
-import Spreadsheet.Interface
 
 ----------------------------------
 -- table showing the sheet content
