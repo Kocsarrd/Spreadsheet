@@ -25,6 +25,7 @@ data EvalError = EGhciError [String] | ETimeoutError
 data Cell' = Str String | Number Double | EmptyCell
   deriving (Eq, Show, Generic)
 
+
 data RefType = Absolute | Relative
   deriving (Eq, Show, Generic)
 

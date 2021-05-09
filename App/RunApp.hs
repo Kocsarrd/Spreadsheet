@@ -26,6 +26,12 @@ runApp = do
   lift $ do
     windowMaximize mainW
     widgetShowAll mainW
+    onDelete mainW $ \e -> do
+      dialog <- dialogNew
+      windowSetTitle dialog "Are you sure? Any unsaved work will be lost!"
+      dialogAddButton dialog "Yes" ResponseYes
+      dialogAddButton dialog "No" ResponseNo
+      ((==) ResponseNo) <$> (dialogRun dialog <* widgetDestroy dialog)
     onDestroy mainW $ do
       mainQuit
       readMVar ghci' >>= stopGhci
