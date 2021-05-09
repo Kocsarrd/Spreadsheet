@@ -4,6 +4,7 @@ module App.Setup.Global
   , updateView
   , setTitle
   , asksGui, askState, askGhci, askFile
+  , runAreYouSureDialog
   , module App.Types
   , module Spreadsheet.Interface
   ) where
@@ -83,6 +84,14 @@ updateView = do
     entrySetText e $ getCellText (fromEnum (k2,k1)) ss
   logAppendText $ getLogMessage ss
   setTitle
+
+runAreYouSureDialog :: IO Bool
+runAreYouSureDialog = do
+  dialog <- dialogNew
+  windowSetTitle dialog "Are you sure? Any unsaved work will be lost!"
+  dialogAddButton dialog "Yes" ResponseYes
+  dialogAddButton dialog "No" ResponseNo
+  ((==) ResponseYes) <$> (dialogRun dialog <* widgetDestroy dialog)
 
 setTitle :: App ()
 setTitle = do

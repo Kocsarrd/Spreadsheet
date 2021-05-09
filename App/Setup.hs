@@ -4,6 +4,7 @@ import Control.Monad.Reader
 
 import App.Setup.CommandLine
 import App.Setup.Editor
+import App.Setup.MainWindow
 import App.Setup.Menubar
 import App.Setup.Table
 import App.Types
@@ -15,4 +16,5 @@ setupGui = do
   setupCommandLine
   setupMenubar
   setupTable
+  setupMainWindow
 

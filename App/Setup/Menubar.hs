@@ -99,14 +99,6 @@ saveNewFile = do
     _ -> pure ()
   lift $ widgetDestroy dialog
 
-runAreYouSureDialog :: IO Bool
-runAreYouSureDialog = do
-  dialog <- dialogNew
-  windowSetTitle dialog "Are you sure? Any unsaved work will be lost!"
-  dialogAddButton dialog "Yes" ResponseYes
-  dialogAddButton dialog "No" ResponseNo
-  ((==) ResponseYes) <$> (dialogRun dialog <* widgetDestroy dialog)
-
 data ModuleActionType = EditPaths | EditModules
   deriving Eq
 
