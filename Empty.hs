@@ -1,7 +1,7 @@
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module Empty ((€), sumD, fromJust) where
+module Empty ((€), sumD, module Data.Maybe) where
 
 
 import Control.Monad

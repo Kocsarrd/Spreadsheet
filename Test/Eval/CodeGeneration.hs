@@ -19,7 +19,7 @@ valNoDep :: TestCase
 valNoDep = ("a0->\"12\",b0->\"alma\"", ss,
             [ (0, Right (["v0 = Just (12)"],[]))
             , (1, Right (["v1 = Just \"alma\""],[]))
-            , (6, Right (["v6 = Nothing"],[])) -- don't know for sure if this is an error
+            , (6, Left (GenEmptyCell,[]))
             ]) where
   ss = emptySpreadsheet
        & setCellState 0 "12"
@@ -59,7 +59,7 @@ treeGraph = ("a0->\"12\",a1->\"11\", b0->\"=3*§a0§\", b1->\"=§b0§+2\", c1->\
                                                               , ("v6 = Just $ sumD [v0,v2]",6)
                                                               , ("v3 = Just $ (fromJust v1)+2",3)
                                                               ]))
-             , (3, Right (["v1 = Just (36)"],[("v3 = Just $ fromJust v1+2",3)]))
+             , (3, Right (["v1 = Just (36)"],[("v3 = Just $ (fromJust v1)+2",3)]))
              ]) where
   ss = emptySpreadsheet
        & setCellState 0 "12"
@@ -97,7 +97,7 @@ refsEmpty = ("a2->\"=sumD §a0:a1§\"", ss, [ (5, Right (["v0 = Nothing", "v2 = 
   ss = setCellState 5 "=sumD §a0:a1§" emptySpreadsheet
 
 
-type CodeGenResult = Either GenError ([String],[(String,CellID)])
+type CodeGenResult = Either (GenError,[CellID]) ([String],[(String,CellID)])
 type TestCase = (String, Spreadsheet, [(CellID, CodeGenResult)])
 
 -- could define pretty printing here
