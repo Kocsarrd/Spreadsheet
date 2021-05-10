@@ -18,7 +18,7 @@ import Spreadsheet.Interface
 -- evaluation can also be called for an id not in the graph (this is not nice imo)
 generateCode :: Spreadsheet -> CellID -> Either (GenError, [CellID]) ([String],[(String,CellID)])
 generateCode sh id
-  | lab (sh^.sheet) id == Just (Val EmptyCell) = Left (GenEmptyCell, [])
+  | lab (sh^.sheet) id == Nothing = Left (GenEmptyCell, [])
   | otherwise = either (Left . (,) GenMissingDep) (Right . codeG) $ depList (sh^.sheet) id
 
 -- generate code for a list of cells

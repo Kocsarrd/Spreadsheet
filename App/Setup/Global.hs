@@ -41,25 +41,27 @@ evalAndSet id = do
     Left (GenListType,_) -> logAppendText "can't evaluate: list type error"
     Right (xs,ys) -> do
       -- 2 debug lines
-      lift $ mapM_ putStrLn xs
-      lift $ mapM_ (\(c,i) -> putStrLn $ show i ++ ' ' : c) ys
+      --lift $ mapM_ putStrLn xs
+      --lift $ mapM_ (\(c,i) -> putStrLn $ show i ++ ' ' : c) ys
       unless (null ys) $ do
-        withReaderT evalControl $ do
           -- needed to clear bindings
-          loadModules
-          mapM_ execGhciQuery xs
-          results <- mapM evalOne ys
-          lift $ putStrLn $ show results
-          lift $ forM_ results $ \(r,i) -> modifyIORef' ssR $ cacheCell i r
+        withReaderT evalControl $ loadModules >> mapM_ execGhciQuery xs
+        results <- mapM evalOne ys
+        --lift $ putStrLn $ show results
+        lift $ forM_ results $ \(r,i) -> modifyIORef' ssR $ cacheCell i r
   fileR <- askFile 
   lift $ modifyIORef' fileR $ fmap (setStatus Modified)
   where
     evalOne (c,i) = do
-      res <- execGhciCommand c
+      res <- withReaderT evalControl $ execGhciCommand c
+      lift $ putStrLn $ show res
       case res of
-        Left err -> pure $ (Left err,i)
-        Right _ -> (\x->(x,i)) <$> execGhciCommand ("fromJust " ++ 'v' : show i)
-      
+        Left err -> showErr err >> (pure  (Left err,i))
+        Right _ -> fmap (\x->(x,i)) $ withReaderT evalControl $ execGhciCommand ("fromJust " ++ 'v' : show i)
+    showErr (EGhciError xs) = mapM_  logAppendText xs
+    showErr ETimeoutError = logAppendText "evaluation timed out"
+    showErr x = logAppendText $ show x
+    
 -- this should support keeping the log shorter than a max number of lines
 logAppendText :: String -> App ()
 logAppendText str = do
