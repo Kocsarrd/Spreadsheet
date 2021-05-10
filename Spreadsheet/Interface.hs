@@ -73,6 +73,7 @@ cacheCell id result ss = overSH ss $ lookupNodeThen id
     readResult (Right ok) = Right $ fromJust $ rep ok ^? cellV 
     convErr (EGhciError _) = FGhciError
     convErr ETimeoutError = FTimeoutError
+    convErr EMissingDepError = FMissingDepError
 
 
 getSelected :: Spreadsheet -> Maybe CellID

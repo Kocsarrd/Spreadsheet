@@ -34,9 +34,11 @@ evalAndSet id = do
   ss <- lift $ readIORef ssR
   eData <- asks evalControl
   case generateCode ss id of
-    Left GenEmptyCell -> pure ()
-    Left GenMissingDep ->  logAppendText "can't evaluate: missing dependencies"
-    Left GenListType -> logAppendText "can't evaluate: list type error"
+    Left (GenEmptyCell,_) -> pure ()
+    Left (GenMissingDep, cs) -> do
+      logAppendText "can't evaluate: missing dependencies"
+      lift $ forM_ cs $ modifyIORef ssR . flip cacheCell (Left EMissingDepError) 
+    Left (GenListType,_) -> logAppendText "can't evaluate: list type error"
     Right (xs,ys) -> do
       -- 2 debug lines
       lift $ mapM_ putStrLn xs
@@ -82,7 +84,7 @@ updateView = do
   l <- asksGui log
   lift $ forM_ ek $ \(e,(k1,k2)) ->
     entrySetText e $ getCellText (fromEnum (k2,k1)) ss
-  logAppendText $ getLogMessage ss
+  --logAppendText $ getLogMessage ss
   setTitle
 
 runAreYouSureDialog :: IO Bool

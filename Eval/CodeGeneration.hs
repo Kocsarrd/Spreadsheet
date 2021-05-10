@@ -16,8 +16,10 @@ import Spreadsheet.Interface
 -- list type check is not yet handled
 -- if id has parse error, GenMissingDep is not informative
 -- evaluation can also be called for an id not in the graph (this is not nice imo)
-generateCode :: Spreadsheet -> CellID -> Either GenError ([String],[(String,CellID)])
-generateCode sh id = maybe (Left GenMissingDep) (Right . codeG) $ depList (sh^.sheet) id
+generateCode :: Spreadsheet -> CellID -> Either (GenError, [CellID]) ([String],[(String,CellID)])
+generateCode sh id
+  | lab (sh^.sheet) id == Just (Val EmptyCell) = Left (GenEmptyCell, [])
+  | otherwise = either (Left . (,) GenMissingDep) (Right . codeG) $ depList (sh^.sheet) id
 
 -- generate code for a list of cells
 -- it is assumed that a cell only depends on cells that precede it in the list
@@ -55,8 +57,10 @@ cellG _ = error "cellG: cell was not a formula"
 -- if a dependency's value is not ready, Nothing is returned
 -- first list contains outer dependencies (can be read from cache)
 -- second list contains cell that depend on given id (need to be reevaluated)
-depList :: Gr Cell Int -> CellID -> Maybe ([(Cell,CellID)],[(Cell,CellID)])
-depList sh id = if ok then Just (lOuterDeps, lDependOnId) else Nothing     
+depList :: Gr Cell Int -> CellID -> Either ([CellID]) ([(Cell,CellID)],[(Cell,CellID)])
+depList sh id = if ok
+                  then Right (lOuterDeps, lDependOnId)
+                  else Left (if null dependOnId' then [] else tail $ dependOnId')     
   where
     ok = (not (null dependOnId') || isEmpty sh) && all cached lOuterDeps && all ready lDependOnId 
     lOuterDeps = map (\i -> (fromJust (lab sh i), i)) outerDeps
