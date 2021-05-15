@@ -54,7 +54,7 @@ evalAndSet id = do
   where
     evalOne (c,i) = do
       res <- withReaderT evalControl $ execGhciCommand c
-      lift $ putStrLn $ show res
+      -- lift $ putStrLn $ show res
       case res of
         Left err -> showErr err >> (pure  (Left err,i))
         Right _ -> fmap (\x->(x,i)) $ withReaderT evalControl $ execGhciCommand ("fromJust " ++ 'v' : show i)
